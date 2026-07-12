@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: #E7E9EC; /* backdrop abu-abu di luar "layar HP" supaya tidak polos di layar lebar */
+  font-family: 'Poppins', 'Inter', sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
+/* Bungkus seluruh app supaya selalu terlihat seperti layar HP, walau dibuka di browser desktop */
+#root {
+  width: 100%;
+  max-width: 448px;
+  min-height: 100vh;
+  background-color: #fff8f0;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.12);
+  position: relative;
+}
+
+.btn-primary {
+  @apply bg-karang text-white font-semibold py-3 px-4 rounded-card w-full text-center active:bg-karang-dark transition;
+}
+
+.btn-outline-danger {
+  @apply border-2 border-red-500 text-red-500 font-semibold py-3 px-4 rounded-card w-full text-center active:bg-red-50 transition;
+}
+
+.card {
+  @apply bg-white rounded-card shadow-md p-4;
+}
+
+.input-field {
+  @apply w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-laut;
+}
+
+/* ── Dipakai halaman Login (gaya Material 3 dari desain Stitch) ── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.sea-mist-shadow {
+  box-shadow: 0 4px 20px rgba(30, 96, 145, 0.08);
+}
+
+.header-curved {
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+  overflow: hidden;
+}
+
+/* Dipakai halaman Register — lengkungan elips, beda gaya dari header-curved di Login */
+.curved-header {
+  clip-path: ellipse(100% 70% at 50% 30%);
+  height: 320px;
+}
+
+/* ── Dipakai halaman Peta Interaktif — label pill di bawah tiap marker ── */
+.leaflet-tooltip.label-pill {
+  background: #004873;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.leaflet-tooltip.label-pill.pengantar {
+  background: #f4a261;
+}
+
+.leaflet-tooltip.label-pill::before {
+  display: none;
+}
+
+/* ── Dipakai drawer menu Beranda — animasi slide masuk dari kiri ── */
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* ── Sembunyikan scrollbar bawaan browser (dipakai TopNav & elemen scroll horizontal lain) ── */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Dipakai popup marker pulau di Peta Interaktif — supaya foto bisa mepet ke tepi kartu ── */
+.leaflet-popup.pulau-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.leaflet-popup.pulau-popup .leaflet-popup-content {
+  margin: 0;
+}
+
+.leaflet-popup.pulau-popup .leaflet-popup-tip-container {
+  margin-top: -1px;
+}
+
+.leaflet-popup.pulau-popup .leaflet-popup-close-button {
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  width: 22px !important;
+  height: 22px !important;
+  line-height: 20px !important;
+  top: 6px !important;
+  right: 6px !important;
+}
