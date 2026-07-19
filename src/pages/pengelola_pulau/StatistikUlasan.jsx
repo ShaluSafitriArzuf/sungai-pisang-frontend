@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import TopNav from '../../components/TopNav';
@@ -48,6 +49,17 @@ export default function StatistikUlasan() {
 
   const rataRata = ulasan.length ? (ulasan.reduce((s, u) => s + u.rating, 0) / ulasan.length).toFixed(1) : '-';
 
+  // Data buat grafik batang — diurutkan dari bulan paling lama ke terbaru (kebalikan dari daftar
+  // teks di bawahnya yang justru sengaja terbaru dulu), karena grafik lebih enak dibaca kalau
+  // waktunya berjalan maju dari kiri ke kanan.
+  const dataGrafik = Object.entries(perBulan)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([bulan, jml]) => ({
+      bulan: labelBulan(bulan).replace(/^(\w{3})\w*/, '$1'), // "Januari 2026" -> "Jan 2026" biar muat
+      Menginap: jml.menginap,
+      'One Day Trip': jml.oneDayTrip,
+    }));
+
   return (
     <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
       <TopNav title="Statistik & Ulasan" menu={MENU} />
@@ -85,6 +97,27 @@ export default function StatistikUlasan() {
                 <p className="text-[11px] text-on-surface-variant">One Day Trip (valid)</p>
                 <p className="text-xl font-bold text-on-surface">{totalOneDayTrip}</p>
               </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm p-3.5">
+              <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-3 px-0.5">
+                Grafik Kunjungan Wisatawan per Bulan
+              </p>
+              {dataGrafik.length === 0 ? (
+                <p className="text-gray-400 text-sm text-center py-10">Belum ada data kunjungan buat digambar grafiknya.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={dataGrafik} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="bulan" tick={{ fontSize: 10 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="Menginap" fill="#004873" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="One Day Trip" fill="#F4A261" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
             <div>
