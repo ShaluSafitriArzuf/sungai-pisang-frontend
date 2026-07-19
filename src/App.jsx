@@ -3,6 +3,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import LupaPassword from './pages/auth/LupaPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import GoogleCallback from './pages/auth/GoogleCallback';
 
 import Beranda from './pages/wisatawan/Beranda';
 import DetailPulau from './pages/wisatawan/DetailPulau';
@@ -70,6 +73,9 @@ export default function App() {
       <Route path="/" element={<Navigate to="/beranda" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/lupa-password" element={<LupaPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/auth/google/callback" element={<GoogleCallback />} />
 
       {/* ── Halaman publik: bisa dilihat semua orang TANPA login ── */}
       <Route path="/beranda" element={<Beranda />} />

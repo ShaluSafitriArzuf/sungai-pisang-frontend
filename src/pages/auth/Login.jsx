@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 function IconGoogle() {
@@ -16,9 +16,10 @@ function IconGoogle() {
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(searchParams.get('google_error') || '');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
@@ -100,10 +101,12 @@ export default function Login() {
                 <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="password">
                   Kata Sandi
                 </label>
-                {/* Belum ada fitur lupa password di backend — tautan ini sementara dekoratif saja */}
-                <span className="font-label-md text-label-md text-primary font-semibold cursor-default">
+                <Link
+                  to="/lupa-password"
+                  className="font-label-md text-label-md text-primary font-semibold hover:underline"
+                >
                   Lupa password?
-                </span>
+                </Link>
               </div>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-outline pointer-events-none">
@@ -154,16 +157,16 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Google/Facebook di bawah ini dekoratif saja mengikuti desain — belum terhubung ke OAuth beneran,
-              karena sistem TA ini hanya pakai login email/password (Sanctum), bukan social login. */}
+          {/* Facebook di bawah ini masih dekoratif — belum diaktifkan, cuma Google yang
+              sudah tersambung ke OAuth beneran (lihat GoogleAuthController di backend). */}
           <div className="grid grid-cols-2 gap-4">
-            <button
-              type="button"
+            <a
+              href="http://localhost:8000/api/auth/google/redirect"
               className="flex items-center justify-center gap-2 py-3 border border-outline-variant rounded-xl font-label-md text-on-surface hover:bg-surface-container transition-colors"
             >
               <IconGoogle />
               <span>Google</span>
-            </button>
+            </a>
             <button
               type="button"
               className="flex items-center justify-center gap-2 py-3 border border-outline-variant rounded-xl font-label-md text-on-surface hover:bg-surface-container transition-colors"

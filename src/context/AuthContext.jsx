@@ -25,6 +25,16 @@ export function AuthProvider({ children }) {
     return res.data.user;
   }
 
+  // Dipakai halaman GoogleCallback: token sudah didapat dari backend (lewat redirect Google),
+  // tinggal simpan lalu ambil data user-nya — beda dari login() biasa yang kirim email+password.
+  async function loginWithToken(token) {
+    localStorage.setItem('token', token);
+    const res = await api.get('/user');
+    localStorage.setItem('user', JSON.stringify(res.data));
+    setUser(res.data);
+    return res.data;
+  }
+
   async function logout() {
     try {
       await api.post('/logout');
@@ -45,7 +55,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, loginWithToken, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
