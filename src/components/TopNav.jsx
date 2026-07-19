@@ -44,23 +44,32 @@ export default function TopNav({ title, menu = [] }) {
         </div>
       </div>
 
-      <nav className="relative flex gap-2 px-4 pb-3.5 overflow-x-auto no-scrollbar">
-        {menu.map((m) => {
-          const aktif = location.pathname === m.to;
-          return (
-            <Link
-              key={m.to}
-              to={m.to}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap transition-colors shrink-0 ${
-                aktif ? 'bg-white text-[#004873]' : 'bg-white/12 text-white/85'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[15px]">{IKON_MENU[m.label] || 'circle'}</span>
-              {m.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <div className="relative">
+        <nav className="relative flex gap-2 px-4 pb-3.5 overflow-x-auto no-scrollbar">
+          {menu.map((m) => {
+            const aktif = location.pathname === m.to;
+            return (
+              <Link
+                key={m.to}
+                to={m.to}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap transition-colors shrink-0 ${
+                  aktif ? 'bg-white text-[#004873]' : 'bg-white/12 text-white/85'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[15px]">{IKON_MENU[m.label] || 'circle'}</span>
+                {m.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Petunjuk visual kalau menu-nya bisa digeser ke samping (ada lebih banyak menu di
+            kanan yang belum kelihatan) — tanpa ini, orang yang baru pertama kali pakai bisa
+            ngira menu cuma sebanyak yang keliatan doang. */}
+        {menu.length > 4 && (
+          <div className="pointer-events-none absolute right-0 top-0 bottom-3.5 w-10 bg-gradient-to-l from-[#004873] to-transparent" />
+        )}
+      </div>
     </header>
   );
 }
