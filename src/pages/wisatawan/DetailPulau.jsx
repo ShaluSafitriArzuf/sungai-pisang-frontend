@@ -193,15 +193,29 @@ export default function DetailPulau() {
               </div>
             </div>
 
-            {/* Mini peta lokasi — pratinjau langsung di halaman, sesuai tema "pemetaan lokasi" */}
-            <div className="mt-3 rounded-lg overflow-hidden border border-[#eceef1]" style={{ height: 140 }}>
+            {/* Mini peta lokasi — pratinjau langsung di halaman, sesuai tema "pemetaan lokasi".
+                Interaksi peta (drag/zoom) dimatikan supaya klik di mana pun langsung membuka
+                halaman Peta Interaktif yang lengkap, bukan malah geser-geser peta kecil ini. */}
+            <button
+              type="button"
+              onClick={() => navigate('/peta')}
+              className="relative mt-3 w-full rounded-lg overflow-hidden border border-[#eceef1] block"
+              style={{ height: 140 }}
+            >
+              <div className="absolute inset-0 z-[500]" />
               <MapContainer
                 center={[
                   (Number(pulau.latitude) + Number(pengantarUtama.latitude)) / 2,
                   (Number(pulau.longitude) + Number(pengantarUtama.longitude)) / 2,
                 ]}
                 zoom={12}
+                zoomControl={false}
+                dragging={false}
                 scrollWheelZoom={false}
+                doubleClickZoom={false}
+                touchZoom={false}
+                boxZoom={false}
+                keyboard={false}
                 style={{ height: '100%', width: '100%' }}
               >
                 <TileLayer
@@ -218,7 +232,12 @@ export default function DetailPulau() {
                   pathOptions={{ color: '#F4A261', weight: 3, dashArray: '8 6' }}
                 />
               </MapContainer>
-            </div>
+
+              <span className="absolute bottom-2 right-2 z-[600] inline-flex items-center gap-1 bg-white/95 text-[11px] font-semibold text-primary px-2.5 py-1 rounded-full shadow">
+                <span className="material-symbols-outlined text-[14px]">open_in_full</span>
+                Lihat Peta Lengkap
+              </span>
+            </button>
           </div>
         )}
 
