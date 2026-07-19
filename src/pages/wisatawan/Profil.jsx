@@ -8,14 +8,19 @@ function inisialNama(nama) {
   return bagian.length > 1 ? (bagian[0][0] + bagian[1][0]).toUpperCase() : bagian[0].slice(0, 2).toUpperCase();
 }
 
-const MENU_ITEMS = [
+const MENU_DASAR = [
   { to: '/reservasi', label: 'Riwayat Reservasi', desc: 'Lihat semua reservasi kamu', icon: 'confirmation_number' },
   { to: '/profil/edit', label: 'Edit Profil', desc: 'Ubah nama, email, & nomor HP', icon: 'edit' },
-  { to: '/profil/password', label: 'Ganti Password', desc: 'Perbarui kata sandi akun', icon: 'lock' },
 ];
+
+// "Ganti Password" cuma relevan buat akun yang daftar manual (email + password sendiri).
+// Akun yang dibuat lewat Google (user.google_id terisi) passwordnya diisi otomatis pakai
+// string acak yang bahkan pemiliknya sendiri tidak tahu — jadi menu ini disembunyikan.
+const MENU_PASSWORD = { to: '/profil/password', label: 'Ganti Password', desc: 'Perbarui kata sandi akun', icon: 'lock' };
 
 export default function Profil() {
   const { user, logout } = useAuth();
+  const menuItems = user?.google_id ? MENU_DASAR : [...MENU_DASAR, MENU_PASSWORD];
 
   return (
     <div className="max-w-md mx-auto pb-20 bg-background min-h-screen">
@@ -36,7 +41,7 @@ export default function Profil() {
 
       {/* Menu */}
       <div className="px-4 -mt-5 relative space-y-2.5">
-        {MENU_ITEMS.map((item) => (
+        {menuItems.map((item) => (
           <Link
             key={item.to}
             to={item.to}
@@ -52,6 +57,12 @@ export default function Profil() {
             <span className="material-symbols-outlined text-outline text-[20px]">chevron_right</span>
           </Link>
         ))}
+
+        {user?.google_id && (
+          <p className="text-center text-[11px] text-on-surface-variant px-2">
+            Akun ini masuk lewat Google, jadi tidak ada password untuk diganti di sini.
+          </p>
+        )}
 
         <button
           onClick={logout}
