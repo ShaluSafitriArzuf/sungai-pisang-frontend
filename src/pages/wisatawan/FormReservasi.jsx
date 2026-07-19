@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { fotoPulauFallback } from '../../utils/fotoPulau';
+import { useAuth } from '../../context/AuthContext';
 
 export default function FormReservasi() {
+  const { user } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const pulauId = params.get('pulau_id');
@@ -40,6 +42,27 @@ export default function FormReservasi() {
   }, [jenis, bawaTendaSendiri, akomodasiId, tanggal, tanggalSelesai]);
 
   if (!pulau) return <p className="p-6 text-center">Memuat...</p>;
+
+  // Nomor HP wajib diisi dulu sebelum reservasi — supaya Pengantar/Pengelola Pulau punya cara
+  // menghubungi wisatawan. Dicek juga di backend (ReservasiController@store), ini cuma supaya
+  // wisatawan tidak capek isi form dulu baru gagal pas submit di halaman Pembayaran.
+  if (!user?.no_hp) {
+    return (
+      <div className="max-w-md mx-auto pb-24 bg-background min-h-screen flex flex-col items-center justify-center px-6 text-center">
+        <span className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+          <span className="material-symbols-outlined text-[28px]">contact_phone</span>
+        </span>
+        <p className="font-bold text-on-surface mb-1">Lengkapi Nomor HP Dulu</p>
+        <p className="text-sm text-on-surface-variant mb-5">
+          Sebelum membuat reservasi, isi dulu nomor HP kamu di halaman Edit Profil — supaya
+          Pengantar Pulau bisa menghubungimu soal jadwal kunjungan.
+        </p>
+        <Link to="/profil/edit" className="btn-primary px-6 py-3">
+          Lengkapi Profil
+        </Link>
+      </div>
+    );
+  }
 
   const tarifPenyeberangan = 50000; // ditampilkan estimasi saja, perhitungan final di backend
   const akomodasiTerpilih = pulau.akomodasi?.find((a) => String(a.id) === String(akomodasiId));
