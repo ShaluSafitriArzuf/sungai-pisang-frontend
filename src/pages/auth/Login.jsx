@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 function IconGoogle() {
   return (
@@ -15,6 +16,7 @@ function IconGoogle() {
 
 export default function Login() {
   const { login } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -28,6 +30,7 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(form.email, form.password);
+      showToast(`Selamat datang, ${user.name}!`, 2000);
       if (user.role === 'wisatawan') navigate('/beranda');
       else if (user.role === 'pengantar_pulau') navigate('/pengantar/dashboard');
       else navigate('/pengelola/dashboard');

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 // Halaman ini cuma transit: backend redirect ke sini bawa ?token=xxx setelah login Google
 // berhasil, tugas kita cuma simpan token itu lalu lempar ke dashboard sesuai role.
 export default function GoogleCallback() {
   const [params] = useSearchParams();
   const { loginWithToken } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
@@ -26,6 +28,7 @@ export default function GoogleCallback() {
 
     loginWithToken(token)
       .then((user) => {
+        showToast(`Selamat datang, ${user.name}!`, 2000);
         if (user.role === 'wisatawan') navigate('/beranda');
         else if (user.role === 'pengantar_pulau') navigate('/pengantar/dashboard');
         else navigate('/pengelola/dashboard');
