@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +16,14 @@ const IKON_MENU = {
 export default function TopNav({ title, menu = [] }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const aktifRef = useRef(null);
+
+  // Tiap pindah halaman, komponen ini dimuat ulang jadi posisi geser menu baliak ke paling kiri
+  // (walau menu yang aktif ada di sebelah kanan, misal menu ke-6). Ini betulin itu — begitu
+  // halaman berganti, otomatis digeser supaya menu yang aktif kelihatan.
+  useEffect(() => {
+    aktifRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [location.pathname]);
 
   return (
     <header className="relative bg-[#004873] text-white sticky top-0 z-20 overflow-hidden">
@@ -52,6 +61,7 @@ export default function TopNav({ title, menu = [] }) {
               <Link
                 key={m.to}
                 to={m.to}
+                ref={aktif ? aktifRef : null}
                 className={`flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap transition-colors shrink-0 ${
                   aktif ? 'bg-white text-[#004873]' : 'bg-white/12 text-white/85'
                 }`}
