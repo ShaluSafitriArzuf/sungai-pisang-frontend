@@ -48,18 +48,29 @@ export default function FormReservasi() {
   // wisatawan tidak capek isi form dulu baru gagal pas submit di halaman Pembayaran.
   if (!user?.no_hp) {
     return (
-      <div className="max-w-md mx-auto pb-24 bg-background min-h-screen flex flex-col items-center justify-center px-6 text-center">
-        <span className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-          <span className="material-symbols-outlined text-[28px]">contact_phone</span>
-        </span>
-        <p className="font-bold text-on-surface mb-1">Lengkapi Nomor HP Dulu</p>
-        <p className="text-sm text-on-surface-variant mb-5">
-          Sebelum membuat reservasi, isi dulu nomor HP kamu di halaman Edit Profil — supaya
-          Pengantar Pulau bisa menghubungimu soal jadwal kunjungan.
-        </p>
-        <Link to="/profil/edit" className="btn-primary px-6 py-3">
-          Lengkapi Profil
-        </Link>
+      <div className="max-w-md mx-auto bg-background min-h-screen">
+        <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
+          <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <p className="font-semibold text-on-surface">Buat Reservasi</p>
+        </div>
+
+        <div className="px-6 pt-16">
+          <div className="bg-white rounded-2xl shadow-md p-7 flex flex-col items-center text-center">
+            <span className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-[30px]">contact_phone</span>
+            </span>
+            <p className="font-bold text-lg text-on-surface mb-2">Lengkapi Nomor HP Dulu</p>
+            <p className="text-sm text-on-surface-variant leading-relaxed mb-6">
+              Sebelum membuat reservasi, isi dulu nomor HP kamu di halaman Edit Profil — supaya
+              Pengantar Pulau bisa menghubungimu soal jadwal kunjungan.
+            </p>
+            <Link to="/profil/edit" className="btn-primary w-full text-center">
+              Lengkapi Profil
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
