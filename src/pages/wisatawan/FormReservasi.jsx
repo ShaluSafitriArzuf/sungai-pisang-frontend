@@ -78,6 +78,14 @@ export default function FormReservasi() {
   const tarifPenyeberangan = 50000; // ditampilkan estimasi saja, perhitungan final di backend
   const akomodasiTerpilih = pulau.akomodasi?.find((a) => String(a.id) === String(akomodasiId));
 
+  // Batas tanggal buat date picker — samain sama validasi backend (after_or_equal:today
+  // untuk tanggal kunjungan/check-in, after:tanggal_kunjungan untuk check-out) supaya
+  // wisatawan nggak bisa pilih tanggal yang bakal ditolak backend.
+  const hariIni = new Date().toISOString().slice(0, 10);
+  const checkoutMin = tanggal
+    ? new Date(new Date(tanggal).getTime() + 86400000).toISOString().slice(0, 10)
+    : hariIni;
+
   const jumlahMalam =
     jenis === 'menginap' && tanggal && tanggalSelesai
       ? Math.max(1, Math.round((new Date(tanggalSelesai) - new Date(tanggal)) / 86400000))
@@ -212,6 +220,7 @@ export default function FormReservasi() {
           type="date"
           className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 mb-4 text-sm outline-none"
           value={tanggal}
+          min={hariIni}
           onChange={(e) => {
             setTanggal(e.target.value);
             if (tanggalSelesai && tanggalSelesai <= e.target.value) setTanggalSelesai('');
@@ -225,7 +234,7 @@ export default function FormReservasi() {
               type="date"
               className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 mb-4 text-sm outline-none"
               value={tanggalSelesai}
-              min={tanggal || undefined}
+              min={checkoutMin}
               onChange={(e) => setTanggalSelesai(e.target.value)}
             />
             {jumlahMalam > 0 && (
