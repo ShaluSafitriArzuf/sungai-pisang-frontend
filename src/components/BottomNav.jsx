@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import api from '../api/axios';
+import { useJumlahNotifBelumDibaca } from '../hooks/useJumlahNotifBelumDibaca';
 
 const items = [
   { to: '/beranda', label: 'Beranda', icon: 'home' },
@@ -11,23 +10,7 @@ const items = [
 ];
 
 export default function BottomNav() {
-  // BottomNav dipasang ulang tiap halaman (bukan 1 layout bersama), jadi ambil ulang jumlah
-  // notifikasi belum dibaca tiap kali komponen ini dimuat — otomatis kebaruan (misal abis
-  // dibuka/dibaca semua di halaman Notifikasi, lalu pindah halaman, badge-nya ikut update).
-  const [belumDibaca, setBelumDibaca] = useState(0);
-
-  useEffect(() => {
-    let batal = false;
-    api
-      .get('/notifikasi')
-      .then((res) => {
-        if (batal) return;
-        const list = res.data.data || res.data;
-        setBelumDibaca(list.filter((n) => !n.is_read).length);
-      })
-      .catch(() => {});
-    return () => { batal = true; };
-  }, []);
+  const belumDibaca = useJumlahNotifBelumDibaca();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant flex justify-around py-2 max-w-md mx-auto">

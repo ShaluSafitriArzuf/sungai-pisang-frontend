@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useJumlahNotifBelumDibaca } from '../hooks/useJumlahNotifBelumDibaca';
 
 const IKON_MENU = {
   Dashboard: 'grid_view',
@@ -17,6 +18,7 @@ export default function TopNav({ title, menu = [] }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const aktifRef = useRef(null);
+  const belumDibaca = useJumlahNotifBelumDibaca();
 
   // Tiap pindah halaman, komponen ini dimuat ulang jadi posisi geser menu baliak ke paling kiri
   // (walau menu yang aktif ada di sebelah kanan, misal menu ke-6). Ini betulin itu — begitu
@@ -38,10 +40,15 @@ export default function TopNav({ title, menu = [] }) {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             to="/notifikasi"
-            className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center active:scale-90 transition-transform"
+            className="relative w-9 h-9 rounded-full bg-white/15 flex items-center justify-center active:scale-90 transition-transform"
             aria-label="Notifikasi"
           >
             <span className="material-symbols-outlined text-[18px]">notifications</span>
+            {belumDibaca > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-[3px] rounded-full bg-[#F4A261] text-white text-[9px] font-bold flex items-center justify-center leading-none border border-[#004873]">
+                {belumDibaca > 9 ? '9+' : belumDibaca}
+              </span>
+            )}
           </Link>
           <button
             onClick={logout}
