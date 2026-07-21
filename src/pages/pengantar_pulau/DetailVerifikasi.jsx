@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import StatusBadge from '../../components/StatusBadge';
 import { useToast } from '../../context/ToastContext';
+import { waLink } from '../../utils/kontak';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {
@@ -67,6 +68,19 @@ export default function DetailVerifikasi() {
 
       <div className="card mb-4 text-sm space-y-1">
         <div className="flex justify-between"><span>Wisatawan</span><span className="font-semibold">{r.wisatawan?.name}</span></div>
+        {r.wisatawan?.no_hp && (
+          <div className="flex justify-end">
+            <a
+              href={waLink(r.wisatawan.no_hp)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-green-600"
+            >
+              <span className="material-symbols-outlined text-[14px]">chat</span>
+              Hubungi via WhatsApp
+            </a>
+          </div>
+        )}
         <div className="flex justify-between"><span>Pulau</span><span>{r.pulau?.nama}</span></div>
         <div className="flex justify-between"><span>Jenis</span><span>{r.jenis === 'one_day_trip' ? 'One Day Trip' : 'Menginap'}</span></div>
         {r.akomodasi && <div className="flex justify-between"><span>Akomodasi</span><span>{r.akomodasi.nama}</span></div>}

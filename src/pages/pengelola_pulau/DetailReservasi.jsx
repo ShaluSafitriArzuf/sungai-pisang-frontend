@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import StatusBadge from '../../components/StatusBadge';
+import { waLink } from '../../utils/kontak';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {
@@ -57,13 +58,13 @@ export default function DetailReservasi() {
             <p className="font-bold text-on-surface truncate">{r.wisatawan?.name}</p>
             {r.wisatawan?.no_hp && (
               <a
-                href={`https://wa.me/62${r.wisatawan.no_hp.replace(/^0/, '')}`}
+                href={waLink(r.wisatawan.no_hp)}
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs text-[#004873] font-semibold flex items-center gap-1 mt-0.5"
               >
-                <span className="material-symbols-outlined text-[13px]">call</span>
-                {r.wisatawan.no_hp}
+                <span className="material-symbols-outlined text-[13px]">chat</span>
+                Hubungi via WhatsApp
               </a>
             )}
           </div>

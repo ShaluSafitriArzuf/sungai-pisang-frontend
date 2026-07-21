@@ -10,6 +10,7 @@ import { FASILITAS_OPSI } from '../../utils/tampilanFasilitas';
 import { jarakKm } from '../../utils/jarak';
 import { pulauIcon, pengantarIcon } from '../../utils/mapIcons';
 import { useToast } from '../../context/ToastContext';
+import { waLink } from '../../utils/kontak';
 
 function inisial(nama = '') {
   return nama
@@ -183,15 +184,29 @@ export default function DetailPulau() {
                   </span>{' '}
                   lewat jalur laut.
                 </p>
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&origin=${pengantarUtama.latitude},${pengantarUtama.longitude}&destination=${pulau.latitude},${pulau.longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary"
-                >
-                  <span className="material-symbols-outlined text-[16px]">route</span>
-                  Lihat Rute di Google Maps
-                </a>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${pengantarUtama.latitude},${pengantarUtama.longitude}&destination=${pulau.latitude},${pulau.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">route</span>
+                    Lihat Rute di Google Maps
+                  </a>
+
+                  {pengantarUtama.no_hp && (
+                    <a
+                      href={waLink(pengantarUtama.no_hp)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-600"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">chat</span>
+                      Tanya Jadwal Jemputan
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 
