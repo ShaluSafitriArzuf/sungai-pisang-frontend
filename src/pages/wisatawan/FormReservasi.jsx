@@ -3,9 +3,11 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { fotoPulauFallback } from '../../utils/fotoPulau';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function FormReservasi() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const pulauId = params.get('pulau_id');
@@ -99,23 +101,23 @@ export default function FormReservasi() {
 
   function lanjut() {
     if (jenis === 'menginap' && !bawaTendaSendiri && !akomodasiId) {
-      alert('Pilih akomodasi, atau centang "Bawa Tenda Sendiri" kalau tidak perlu akomodasi.');
+      showToast('Pilih akomodasi, atau centang "Bawa Tenda Sendiri" kalau tidak perlu akomodasi.', 2800, 'peringatan');
       return;
     }
     if (!tanggal) {
-      alert('Pilih tanggal kunjungan.');
+      showToast('Pilih tanggal kunjungan.', 2800, 'peringatan');
       return;
     }
     if (jenis === 'menginap' && !tanggalSelesai) {
-      alert('Pilih tanggal selesai (check-out).');
+      showToast('Pilih tanggal selesai (check-out).', 2800, 'peringatan');
       return;
     }
     if (jenis === 'menginap' && tanggalSelesai <= tanggal) {
-      alert('Tanggal selesai harus setelah tanggal kunjungan.');
+      showToast('Tanggal selesai harus setelah tanggal kunjungan.', 2800, 'peringatan');
       return;
     }
     if (jenis === 'menginap' && !bawaTendaSendiri && ketersediaan && !ketersediaan.tersedia) {
-      alert('Akomodasi ini sudah penuh untuk tanggal yang dipilih. Pilih tanggal atau akomodasi lain.');
+      showToast('Akomodasi ini sudah penuh untuk tanggal yang dipilih. Pilih tanggal atau akomodasi lain.', 2800, 'peringatan');
       return;
     }
 

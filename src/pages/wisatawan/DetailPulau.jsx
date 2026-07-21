@@ -9,6 +9,7 @@ import { ikonWahana, fotoAkomodasiFallback } from '../../utils/tampilanKegiatan'
 import { FASILITAS_OPSI } from '../../utils/tampilanFasilitas';
 import { jarakKm } from '../../utils/jarak';
 import { pulauIcon, pengantarIcon } from '../../utils/mapIcons';
+import { useToast } from '../../context/ToastContext';
 
 function inisial(nama = '') {
   return nama
@@ -58,6 +59,7 @@ function waktuRelatif(tanggal) {
 export default function DetailPulau() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [pulau, setPulau] = useState(null);
   const [pengantarUtama, setPengantarUtama] = useState(null);
   const [lightbox, setLightbox] = useState(null);
@@ -78,7 +80,7 @@ export default function DetailPulau() {
       navigator.share({ title: pulau.nama, url }).catch(() => {});
     } else {
       await navigator.clipboard.writeText(url);
-      alert('Tautan halaman disalin.');
+      showToast('Tautan halaman disalin.', 2000, 'sukses');
     }
   }
 

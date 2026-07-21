@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import StatusBadge from '../../components/StatusBadge';
+import { useToast } from '../../context/ToastContext';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {
@@ -14,6 +15,7 @@ function formatTanggal(iso) {
 export default function DetailVerifikasi() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [r, setR] = useState(null);
   const [catatan, setCatatan] = useState('');
   const [statusRefund, setStatusRefund] = useState('disetujui');
@@ -28,7 +30,7 @@ export default function DetailVerifikasi() {
 
   async function verifikasi(status) {
     if (status === 'ditolak' && !catatan) {
-      alert('Isi catatan penolakan terlebih dahulu.');
+      showToast('Isi catatan penolakan terlebih dahulu.', 2800, 'peringatan');
       return;
     }
     setError('');

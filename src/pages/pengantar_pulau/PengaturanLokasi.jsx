@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import TopNav from '../../components/TopNav';
 
 const MENU = [
@@ -25,6 +26,7 @@ function DraggableMarker({ position, setPosition }) {
 
 export default function PengaturanLokasi() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [position, setPosition] = useState([
     user?.latitude ? Number(user.latitude) : -1.078,
     user?.longitude ? Number(user.longitude) : 100.35,
@@ -49,7 +51,7 @@ export default function PengaturanLokasi() {
       if (fotoFile) formData.append('foto', fotoFile);
 
       await api.post('/peta/lokasi-saya', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      alert('Lokasi berhasil disimpan.');
+      showToast('Lokasi berhasil disimpan.', 2000, 'sukses');
     } finally {
       setLoading(false);
     }
