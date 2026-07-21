@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import StatusBadge from '../../components/StatusBadge';
+import { useToast } from '../../context/ToastContext';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {
@@ -14,13 +15,52 @@ function formatTanggal(iso) {
 export default function DetailReservasi() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [r, setR] = useState(null);
+
+  // Upload ulang bukti transfer — dipakai kalau reservasi ditolak gara-gara bukti kurang
+  // jelas/salah upload, supaya wisatawan tidak perlu bikin reservasi baru dari nol.
+  const [previewBaru, setPreviewBaru] = useState(null);
+  const [buktiBaru, setBuktiBaru] = useState('');
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     api.get(`/reservasi/${id}`).then((res) => setR(res.data));
   }, [id]);
 
   if (!r) return <p className="p-6 text-center">Memuat...</p>;
+
+  function handleFileBaru(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreviewBaru(reader.result);
+      setBuktiBaru(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function uploadUlang() {
+    if (!buktiBaru) {
+      setUploadError('Pilih foto bukti transfer terlebih dahulu.');
+      return;
+    }
+    setUploadLoading(true);
+    setUploadError('');
+    try {
+      const res = await api.post(`/reservasi/${id}/upload-ulang-bukti`, { bukti_transfer: buktiBaru });
+      setR(res.data.data);
+      setPreviewBaru(null);
+      setBuktiBaru('');
+      showToast('Bukti transfer berhasil diunggah ulang, menunggu verifikasi.', 2800, 'sukses');
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Gagal mengunggah ulang bukti transfer.');
+    } finally {
+      setUploadLoading(false);
+    }
+  }
 
   // bisa_ajukan_batal dihitung backend (aturan H-2), bukan cuma cek status='valid' di sini —
   // supaya tombol ini selalu sinkron dengan aturan yang benar-benar dipakai saat submit.
@@ -52,10 +92,35 @@ export default function DetailReservasi() {
       </div>
 
       {r.status === 'ditolak' && (
-        <div className="card mb-4 text-sm bg-red-50">
-          <p className="font-semibold text-red-600">Catatan Penolakan</p>
-          <p className="text-gray-600">{r.catatan_penolakan}</p>
-        </div>
+        <>
+          <div className="card mb-4 text-sm bg-red-50">
+            <p className="font-semibold text-red-600">Catatan Penolakan</p>
+            <p className="text-gray-600">{r.catatan_penolakan}</p>
+          </div>
+
+          <div className="card mb-4 text-sm">
+            <p className="font-semibold mb-1">Unggah Ulang Bukti Transfer</p>
+            <p className="text-gray-500 text-xs mb-3">
+              Kalau alasannya cuma soal bukti kurang jelas atau salah upload, tidak perlu bikin reservasi baru —
+              cukup unggah ulang foto bukti transfer di sini, reservasi ini akan diverifikasi ulang.
+            </p>
+
+            {uploadError && <p className="text-red-500 text-xs mb-2">{uploadError}</p>}
+
+            <label className="flex flex-col items-center justify-center border-dashed border-2 border-gray-300 rounded-xl py-6 cursor-pointer mb-3">
+              {previewBaru ? (
+                <img src={previewBaru} alt="preview bukti baru" className="max-h-40 rounded-lg" />
+              ) : (
+                <span className="text-gray-400 text-sm">Tap untuk upload bukti transfer baru</span>
+              )}
+              <input type="file" accept="image/*" className="hidden" onChange={handleFileBaru} />
+            </label>
+
+            <button className="btn-primary" onClick={uploadUlang} disabled={uploadLoading}>
+              {uploadLoading ? 'Mengunggah...' : 'Kirim Bukti Baru'}
+            </button>
+          </div>
+        </>
       )}
 
       {r.status === 'pengajuan_batal' && (

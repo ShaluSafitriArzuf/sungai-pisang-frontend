@@ -22,7 +22,10 @@ const AKSEN_STATUS = {
   selesai: 'border-l-blue-400',
 };
 
-const STATUS_AKTIF = ['menunggu_verifikasi', 'valid', 'pengajuan_batal'];
+// 'ditolak' sengaja dimasukkan ke "aktif" (bukan riwayat) — karena sekarang reservasi yang
+// ditolak masih bisa ditindaklanjuti (unggah ulang bukti transfer di halaman detailnya),
+// jadi harus tetap kelihatan mencolok, bukan tenggelam di riwayat lama.
+const STATUS_AKTIF = ['menunggu_verifikasi', 'valid', 'pengajuan_batal', 'ditolak'];
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {

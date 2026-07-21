@@ -48,6 +48,15 @@ export default function Notifikasi() {
     });
   }
 
+  // Notifikasi yang terkait 1 reservasi (mis. "Reservasi Anda Ditolak") bisa diklik langsung
+  // ke halaman detail reservasi itu — supaya wisatawan bisa langsung unggah ulang bukti
+  // transfer kalau ditolak, tanpa harus cari-cari sendiri di Riwayat Reservasi.
+  function bukaNotifikasi(n) {
+    if (!n.is_read) tandaiDibaca(n.id);
+    if (!n.reservasi_id) return;
+    navigate(user?.role === 'pengantar_pulau' ? `/pengantar/reservasi/${n.reservasi_id}` : `/reservasi/${n.reservasi_id}`);
+  }
+
   function tandaiSemuaDibaca() {
     const belumDibaca = list.filter((n) => !n.is_read);
     setList((prev) => prev.map((n) => ({ ...n, is_read: true })));
@@ -104,7 +113,7 @@ export default function Notifikasi() {
             return (
               <div
                 key={n.id}
-                onClick={() => !n.is_read && tandaiDibaca(n.id)}
+                onClick={() => bukaNotifikasi(n)}
                 className={`bg-white rounded-xl shadow-sm flex gap-3 p-3 cursor-pointer transition-colors ${
                   !n.is_read ? 'border-l-4 border-[#F4A261]' : 'border-l-4 border-transparent opacity-75'
                 }`}
@@ -120,6 +129,9 @@ export default function Notifikasi() {
                   <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">{n.pesan}</p>
                   <p className="text-[10px] text-outline mt-1.5">{waktuRelatif(n.created_at)}</p>
                 </div>
+                {n.reservasi_id && (
+                  <span className="material-symbols-outlined text-[18px] text-outline self-center shrink-0">chevron_right</span>
+                )}
               </div>
             );
           })}
