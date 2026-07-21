@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import api from '../api/axios';
 
 const items = [
   { to: '/beranda', label: 'Beranda', icon: 'home' },
@@ -9,6 +11,24 @@ const items = [
 ];
 
 export default function BottomNav() {
+  // BottomNav dipasang ulang tiap halaman (bukan 1 layout bersama), jadi ambil ulang jumlah
+  // notifikasi belum dibaca tiap kali komponen ini dimuat — otomatis kebaruan (misal abis
+  // dibuka/dibaca semua di halaman Notifikasi, lalu pindah halaman, badge-nya ikut update).
+  const [belumDibaca, setBelumDibaca] = useState(0);
+
+  useEffect(() => {
+    let batal = false;
+    api
+      .get('/notifikasi')
+      .then((res) => {
+        if (batal) return;
+        const list = res.data.data || res.data;
+        setBelumDibaca(list.filter((n) => !n.is_read).length);
+      })
+      .catch(() => {});
+    return () => { batal = true; };
+  }, []);
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant flex justify-around py-2 max-w-md mx-auto">
       {items.map((item) => (
@@ -21,11 +41,18 @@ export default function BottomNav() {
         >
           {({ isActive }) => (
             <>
-              <span
-                className="material-symbols-outlined text-[22px]"
-                style={{ fontVariationSettings: `'FILL' ${isActive ? 1 : 0}` }}
-              >
-                {item.icon}
+              <span className="relative inline-flex">
+                <span
+                  className="material-symbols-outlined text-[22px]"
+                  style={{ fontVariationSettings: `'FILL' ${isActive ? 1 : 0}` }}
+                >
+                  {item.icon}
+                </span>
+                {item.to === '/notifikasi' && belumDibaca > 0 && (
+                  <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] px-[3px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none border border-white">
+                    {belumDibaca > 9 ? '9+' : belumDibaca}
+                  </span>
+                )}
               </span>
               {item.label}
             </>
