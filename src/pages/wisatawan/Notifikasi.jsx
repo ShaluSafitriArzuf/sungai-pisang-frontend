@@ -54,7 +54,9 @@ export default function Notifikasi() {
   function bukaNotifikasi(n) {
     if (!n.is_read) tandaiDibaca(n.id);
     if (!n.reservasi_id) return;
-    navigate(user?.role === 'pengantar_pulau' ? `/pengantar/reservasi/${n.reservasi_id}` : `/reservasi/${n.reservasi_id}`);
+    if (user?.role === 'pengantar_pulau') navigate(`/pengantar/reservasi/${n.reservasi_id}`);
+    else if (user?.role === 'pengelola_pulau') navigate(`/pengelola/reservasi/${n.reservasi_id}`);
+    else navigate(`/reservasi/${n.reservasi_id}`);
   }
 
   function tandaiSemuaDibaca() {

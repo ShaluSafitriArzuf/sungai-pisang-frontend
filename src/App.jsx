@@ -28,6 +28,7 @@ import PengaturanLokasi from './pages/pengantar_pulau/PengaturanLokasi';
 import RiwayatPengantar from './pages/pengantar_pulau/Riwayat';
 
 import DashboardPengelola from './pages/pengelola_pulau/Dashboard';
+import DetailReservasiPengelola from './pages/pengelola_pulau/DetailReservasi';
 import KelolaAkomodasi from './pages/pengelola_pulau/KelolaAkomodasi';
 import KelolaWahana from './pages/pengelola_pulau/KelolaWahana';
 import KelolaGaleri from './pages/pengelola_pulau/KelolaGaleri';
@@ -103,6 +104,7 @@ export default function App() {
 
       {/* ── Pengelola Pulau (6 halaman) ── */}
       <Route path="/pengelola/dashboard" element={PG(DashboardPengelola)} />
+      <Route path="/pengelola/reservasi/:id" element={PG(DetailReservasiPengelola)} />
       <Route path="/pengelola/akomodasi" element={PG(KelolaAkomodasi)} />
       <Route path="/pengelola/wahana" element={PG(KelolaWahana)} />
       <Route path="/pengelola/galeri" element={PG(KelolaGaleri)} />

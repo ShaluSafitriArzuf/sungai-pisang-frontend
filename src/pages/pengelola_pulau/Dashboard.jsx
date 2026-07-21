@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import TopNav from '../../components/TopNav';
@@ -27,7 +28,10 @@ function inisial(nama = '') {
 
 function KartuTamu({ r, subtitle }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-3 flex items-center gap-3">
+    <Link
+      to={`/pengelola/reservasi/${r.id}`}
+      className="bg-white rounded-xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all p-3 flex items-center gap-3"
+    >
       <div className="w-10 h-10 rounded-full bg-[#004873]/10 text-[#004873] text-xs font-bold flex items-center justify-center shrink-0">
         {inisial(r.wisatawan?.name)}
       </div>
@@ -38,7 +42,8 @@ function KartuTamu({ r, subtitle }) {
       <span className="bg-surface-container text-on-surface-variant text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
         {r.jumlah_orang} org
       </span>
-    </div>
+      <span className="material-symbols-outlined text-[16px] text-outline shrink-0">chevron_right</span>
+    </Link>
   );
 }
 
