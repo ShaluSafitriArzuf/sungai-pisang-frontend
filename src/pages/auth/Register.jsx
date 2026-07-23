@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Register() {
   const { register } = useAuth();
-  const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', no_hp: '', password: '', password_confirmation: '' });
   const [agree, setAgree] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Akun baru sekarang wajib klik link verifikasi di email dulu sebelum bisa login (lihat
+  // AuthContext.register() & backend AuthController@register) — jadi setelah daftar, bukan
+  // langsung masuk ke Beranda, tapi tampilkan layar "cek email kamu" ini.
+  const [berhasilDaftar, setBerhasilDaftar] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,13 +27,36 @@ export default function Register() {
     setLoading(true);
     try {
       await register(form);
-      navigate('/beranda');
+      setBerhasilDaftar(true);
     } catch (err) {
       const errors = err.response?.data?.errors;
       setError(errors ? Object.values(errors).flat().join(', ') : 'Registrasi gagal.');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (berhasilDaftar) {
+    return (
+      <div className="bg-background min-h-screen flex flex-col items-center justify-center px-container-margin">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-black/10 p-8 flex flex-col items-center text-center">
+          <span className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-[30px]">mark_email_read</span>
+          </span>
+          <h2 className="font-headline-md text-headline-md text-on-surface mb-2">Cek Email Kamu</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-1">
+            Kami sudah kirim link verifikasi ke
+          </p>
+          <p className="font-semibold text-on-surface mb-4">{form.email}</p>
+          <p className="text-sm text-on-surface-variant leading-relaxed mb-6">
+            Klik link di email itu dulu supaya akunnya aktif — baru setelah itu kamu bisa login.
+          </p>
+          <Link to="/login" className="btn-primary w-full text-center">
+            Ke Halaman Login
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -23,10 +24,27 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(searchParams.get('google_error') || '');
   const [loading, setLoading] = useState(false);
+  // Ditandai true kalau login gagal SPESIFIK karena email belum diverifikasi (bukan salah
+  // password) — tampilkan tombol "kirim ulang" alih-alih cuma pesan error biasa.
+  const [perluVerifikasi, setPerluVerifikasi] = useState(false);
+  const [kirimUlangStatus, setKirimUlangStatus] = useState('');
+
+  // Kalau baru saja klik link verifikasi di email, backend redirect balik kesini bawa
+  // ?verifikasi=berhasil/gagal/kadaluarsa (lihat AuthController@verifikasiEmail) — tampilkan
+  // hasilnya lewat toast begitu halaman ini dibuka.
+  useEffect(() => {
+    const v = searchParams.get('verifikasi');
+    if (v === 'berhasil') showToast('Email berhasil diverifikasi! Silakan login.', 3000, 'sukses');
+    else if (v === 'kadaluarsa') showToast('Link verifikasi sudah kadaluarsa. Minta link baru lewat form registrasi/login.', 3500, 'peringatan');
+    else if (v === 'gagal') showToast('Link verifikasi tidak valid.', 3000, 'peringatan');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setPerluVerifikasi(false);
+    setKirimUlangStatus('');
     setLoading(true);
     try {
       const user = await login(form.email, form.password);
@@ -36,8 +54,19 @@ export default function Login() {
       else navigate('/pengelola/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Email atau password salah.');
+      setPerluVerifikasi(Boolean(err.response?.data?.perlu_verifikasi_email));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function kirimUlangVerifikasi() {
+    setKirimUlangStatus('mengirim');
+    try {
+      await api.post('/verifikasi-email/kirim-ulang', { email: form.email });
+      setKirimUlangStatus('terkirim');
+    } catch {
+      setKirimUlangStatus('gagal');
     }
   }
 
@@ -73,7 +102,32 @@ export default function Login() {
             </p>
           </div>
 
-          {error && <p className="text-error text-sm mb-4">{error}</p>}
+          {error && (
+            <div className="mb-4">
+              <p className="text-error text-sm">{error}</p>
+              {perluVerifikasi && (
+                <div className="mt-2">
+                  {kirimUlangStatus === 'terkirim' ? (
+                    <p className="text-xs text-green-600 font-semibold">
+                      Link verifikasi baru sudah dikirim, cek email kamu ya.
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={kirimUlangVerifikasi}
+                      disabled={kirimUlangStatus === 'mengirim'}
+                      className="text-xs font-semibold text-primary hover:underline disabled:opacity-60"
+                    >
+                      {kirimUlangStatus === 'mengirim' ? 'Mengirim...' : 'Kirim ulang link verifikasi'}
+                    </button>
+                  )}
+                  {kirimUlangStatus === 'gagal' && (
+                    <p className="text-xs text-error mt-1">Gagal mengirim, coba lagi.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <form className="space-y-stack-lg" onSubmit={handleSubmit}>
             {/* Email */}

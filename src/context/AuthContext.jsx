@@ -17,12 +17,12 @@ export function AuthProvider({ children }) {
     return res.data.user;
   }
 
+  // Sengaja TIDAK auto-login lagi (backend juga sudah tidak mengirim token di sini) — akun
+  // baru wajib klik link verifikasi di email dulu sebelum bisa login. Lihat Register.jsx
+  // yang menampilkan layar "cek email kamu" setelah ini berhasil.
   async function register(data) {
     const res = await api.post('/register', data);
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    setUser(res.data.user);
-    return res.data.user;
+    return res.data;
   }
 
   // Dipakai halaman GoogleCallback: token sudah didapat dari backend (lewat redirect Google),
