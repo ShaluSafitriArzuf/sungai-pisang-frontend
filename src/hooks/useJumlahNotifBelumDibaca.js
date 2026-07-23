@@ -9,6 +9,13 @@ export function useJumlahNotifBelumDibaca() {
   const [jumlah, setJumlah] = useState(0);
 
   useEffect(() => {
+    // PENTING: BottomNav & TopNav ini juga dipasang di halaman PUBLIK (Beranda, Detail Pulau,
+    // Peta) yang sengaja bisa dibuka tanpa login. /notifikasi wajib login (401 kalau tanpa
+    // token) — dan axios.js punya aturan global "401 dari mana pun = paksa redirect ke
+    // /login" (lihat src/api/axios.js). Tanpa pengecekan ini, pengunjung anonim yang buka
+    // Beranda akan otomatis ke-lempar ke halaman Login gara-gara badge ini nge-fetch diam-diam.
+    if (!localStorage.getItem('token')) return;
+
     let batal = false;
     api
       .get('/notifikasi')
