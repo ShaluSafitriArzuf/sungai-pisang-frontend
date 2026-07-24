@@ -214,26 +214,17 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Facebook di bawah ini masih dekoratif — belum diaktifkan, cuma Google yang
-              sudah tersambung ke OAuth beneran (lihat GoogleAuthController di backend). */}
-          <div className="grid grid-cols-2 gap-4">
-            <a
-              href="http://localhost:8000/api/auth/google/redirect"
-              className="flex items-center justify-center gap-2 py-3 border border-outline-variant rounded-xl font-label-md text-on-surface hover:bg-surface-container transition-colors"
-            >
-              <IconGoogle />
-              <span>Google</span>
-            </a>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 py-3 border border-outline-variant rounded-xl font-label-md text-on-surface hover:bg-surface-container transition-colors"
-            >
-              <span className="material-symbols-outlined text-[#1877F2]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                face_nod
-              </span>
-              <span>Facebook</span>
-            </button>
-          </div>
+          {/* Facebook SENGAJA dihapus dari tampilan — dulu cuma dekoratif (belum tersambung ke
+              OAuth beneran), berisiko bikin bingung kalau diklik saat demo tidak terjadi apa-apa.
+              Cuma Google yang ditampilkan karena itu satu-satunya yang sudah benar-benar
+              berfungsi (lihat GoogleAuthController di backend). */}
+          <a
+            href="http://localhost:8000/api/auth/google/redirect"
+            className="flex items-center justify-center gap-2 py-3 border border-outline-variant rounded-xl font-label-md text-on-surface hover:bg-surface-container transition-colors"
+          >
+            <IconGoogle />
+            <span>Google</span>
+          </a>
 
           <div className="mt-8 text-center">
             <p className="font-body-md text-body-md text-on-surface-variant">
