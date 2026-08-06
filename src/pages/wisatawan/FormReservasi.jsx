@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { fotoPulauFallback } from '../../utils/fotoPulau';
+import { ikonFasilitasAkomodasi, labelFasilitasAkomodasi } from '../../utils/tampilanFasilitasAkomodasi';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -15,6 +16,7 @@ export default function FormReservasi() {
   const [pulau, setPulau] = useState(null);
   const [jenis, setJenis] = useState('one_day_trip');
   const [akomodasiId, setAkomodasiId] = useState('');
+  const [jumlahUnit, setJumlahUnit] = useState(1);
   const [bawaTendaSendiri, setBawaTendaSendiri] = useState(false);
   const [tanggal, setTanggal] = useState('');
   const [tanggalSelesai, setTanggalSelesai] = useState('');
@@ -77,26 +79,60 @@ export default function FormReservasi() {
     );
   }
 
-  const tarifPenyeberangan = 50000; // ditampilkan estimasi saja, perhitungan final di backend
+  // Tarif penyeberangan dan tiket masuk diambil per pulau dari backend. Tiket masuk berbeda
+  // antara One Day Trip dan Menginap, jadi ikut berubah begitu jenis kunjungan diganti.
+  // Angka di sini estimasi tampilan saja — perhitungan final tetap dilakukan backend.
+  const tarifPenyeberangan = Number(pulau.harga_penyeberangan) || 0;
+  const tarifTiketMasuk =
+    jenis === 'menginap'
+      ? Number(pulau.harga_tiket_masuk_menginap) || 0
+      : Number(pulau.harga_tiket_masuk_one_day) || 0;
   const akomodasiTerpilih = pulau.akomodasi?.find((a) => String(a.id) === String(akomodasiId));
 
-  // Batas tanggal buat date picker — samain sama validasi backend (after_or_equal:today
-  // untuk tanggal kunjungan/check-in, after:tanggal_kunjungan untuk check-out) supaya
-  // wisatawan nggak bisa pilih tanggal yang bakal ditolak backend.
-  const hariIni = new Date().toISOString().slice(0, 10);
+  // Batas tanggal buat date picker — samain sama validasi backend supaya wisatawan nggak bisa
+  // pilih tanggal yang bakal ditolak backend.
+  //
+  // JANGAN pakai toISOString(): fungsi itu mengubah waktu ke UTC dulu, sehingga di Indonesia
+  // (WIB, UTC+7) tanggal yang dihasilkan masih tanggal kemarin sampai pukul 07.00 pagi.
+  // Akibatnya tanggal yang sudah lewat masih bisa dipilih.
+  const tglLokal = (d) => {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+
+  // Reservasi paling cepat untuk BESOK (H-1), bukan hari ini. Pengantar Pulau butuh waktu
+  // memverifikasi bukti transfer dan menyusun manifest keberangkatan; kalau dipesan di hari
+  // yang sama, verifikasi bisa saja baru dilakukan setelah jam keberangkatan lewat.
+  const besok = new Date();
+  besok.setDate(besok.getDate() + 1);
+  const tanggalMinimal = tglLokal(besok);
+
   const checkoutMin = tanggal
-    ? new Date(new Date(tanggal).getTime() + 86400000).toISOString().slice(0, 10)
-    : hariIni;
+    ? tglLokal(new Date(new Date(tanggal).getTime() + 86400000))
+    : tanggalMinimal;
 
   const jumlahMalam =
     jenis === 'menginap' && tanggal && tanggalSelesai
       ? Math.max(1, Math.round((new Date(tanggalSelesai) - new Date(tanggal)) / 86400000))
       : 0;
 
-  const biayaPenyeberangan = tarifPenyeberangan * jumlahOrang;
-  const biayaTiket = Number(pulau.harga_tiket_masuk) * jumlahOrang;
+  // jumlahOrang bisa sementara kosong ('') selagi user lagi ngetik ulang di input-nya,
+  // jadi kalkulasi biaya pakai versi "aman" ini (minimal 1) supaya tidak muncul NaN.
+  const jumlahOrangAman = Math.max(1, parseInt(jumlahOrang, 10) || 0);
+  const jumlahUnitAman = Math.max(1, parseInt(jumlahUnit, 10) || 0);
+
+  // Saran jumlah unit = jumlah orang dibagi kapasitas per unit, dibulatkan ke atas.
+  // Ditampilkan sebagai anjuran, bukan paksaan — wisatawan tetap boleh memesan lebih sedikit
+  // unit, misalnya sebagian anggota rombongan membawa tenda sendiri.
+  const unitDisarankan =
+    akomodasiTerpilih?.kapasitas ? Math.ceil(jumlahOrangAman / Number(akomodasiTerpilih.kapasitas)) : 1;
+
+  const biayaPenyeberangan = tarifPenyeberangan * jumlahOrangAman;
+  const biayaTiket = tarifTiketMasuk * jumlahOrangAman;
   const biayaAkomodasi =
-    jenis === 'menginap' && !bawaTendaSendiri && akomodasiTerpilih ? Number(akomodasiTerpilih.harga_per_malam) * jumlahMalam : 0;
+    jenis === 'menginap' && !bawaTendaSendiri && akomodasiTerpilih
+      ? Number(akomodasiTerpilih.harga_per_malam) * jumlahMalam * jumlahUnitAman
+      : 0;
   const total = biayaPenyeberangan + biayaTiket + biayaAkomodasi;
 
   function lanjut() {
@@ -126,10 +162,11 @@ export default function FormReservasi() {
         pulau_id: pulau.id,
         jenis,
         akomodasi_id: jenis === 'menginap' && !bawaTendaSendiri ? akomodasiId : null,
+        jumlah_unit_dipesan: jenis === 'menginap' && !bawaTendaSendiri ? jumlahUnitAman : 1,
         bawa_tenda_sendiri: jenis === 'menginap' ? bawaTendaSendiri : false,
         tanggal_kunjungan: tanggal,
         tanggal_selesai: jenis === 'menginap' ? tanggalSelesai : null,
-        jumlah_orang: jumlahOrang,
+        jumlah_orang: jumlahOrangAman,
         total_estimasi: total,
         nama_pulau: pulau.nama,
       },
@@ -187,13 +224,106 @@ export default function FormReservasi() {
               className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 mb-2.5 text-sm outline-none disabled:bg-surface-container disabled:text-on-surface-variant"
               value={akomodasiId}
               disabled={bawaTendaSendiri}
-              onChange={(e) => setAkomodasiId(e.target.value)}
+              onChange={(e) => {
+                setAkomodasiId(e.target.value);
+                setJumlahUnit(1); // reset ke 1 setiap ganti akomodasi, kapasitasnya beda-beda
+              }}
             >
               <option value="">Pilih Akomodasi</option>
               {pulau.akomodasi?.map((a) => (
                 <option key={a.id} value={a.id}>{a.nama} — Rp{Number(a.harga_per_malam).toLocaleString('id-ID')}/malam</option>
               ))}
             </select>
+
+            {/* Ringkasan akomodasi terpilih — supaya wisatawan tahu persis apa yang dia pesan
+                (muat berapa orang, ber-AC atau berkipas) tanpa harus kembali ke Detail Pulau. */}
+            {akomodasiTerpilih && !bawaTendaSendiri && (
+              <div className="bg-white border border-outline-variant rounded-xl px-4 py-3 mb-2.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs text-on-surface-variant capitalize">{akomodasiTerpilih.tipe}</span>
+                  {akomodasiTerpilih.kapasitas && (
+                    <span className="flex items-center gap-0.5 text-xs text-on-surface-variant">
+                      <span className="material-symbols-outlined text-[14px]">group</span>
+                      Muat {akomodasiTerpilih.kapasitas} orang
+                    </span>
+                  )}
+                </div>
+
+                {akomodasiTerpilih.fasilitas?.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {akomodasiTerpilih.fasilitas.map((f) => (
+                      <span
+                        key={f}
+                        className="flex items-center gap-0.5 bg-surface-container text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded-md"
+                      >
+                        <span className="material-symbols-outlined text-[12px] text-primary">
+                          {ikonFasilitasAkomodasi(f)}
+                        </span>
+                        {labelFasilitasAkomodasi(f)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {akomodasiTerpilih.deskripsi && (
+                  <p className="text-[11px] text-on-surface-variant leading-relaxed mt-1.5">
+                    {akomodasiTerpilih.deskripsi}
+                  </p>
+                )}
+
+                {akomodasiTerpilih.kapasitas && (
+                  <div className="mt-2.5 pt-2.5 border-t border-outline-variant">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-on-surface">Jumlah Unit Dipesan</p>
+                        <p className="text-[10px] text-on-surface-variant leading-tight mt-0.5">
+                          Muat total {akomodasiTerpilih.kapasitas * jumlahUnitAman} orang
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setJumlahUnit(Math.max(1, jumlahUnitAman - 1))}
+                          className="w-8 h-8 rounded-lg border border-outline-variant flex items-center justify-center text-on-surface disabled:opacity-40"
+                          disabled={jumlahUnitAman <= 1}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">remove</span>
+                        </button>
+                        <span className="w-7 text-center text-sm font-semibold text-on-surface">
+                          {jumlahUnitAman}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setJumlahUnit(jumlahUnitAman + 1)}
+                          className="w-8 h-8 rounded-lg border border-outline-variant flex items-center justify-center text-on-surface"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">add</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {jumlahUnitAman < unitDisarankan && (
+                      <p className="flex items-start gap-1.5 text-[11px] text-[#B45309] leading-relaxed mt-2">
+                        <span className="material-symbols-outlined text-[14px] leading-none mt-px">info</span>
+                        <span>
+                          Rombonganmu {jumlahOrangAman} orang. Untuk semuanya tertampung,
+                          disarankan memesan {unitDisarankan} unit.{' '}
+                          <button
+                            type="button"
+                            onClick={() => setJumlahUnit(unitDisarankan)}
+                            className="font-semibold underline"
+                          >
+                            Jadikan {unitDisarankan} unit
+                          </button>
+                          . Kalau sebagian anggota membawa tenda sendiri, jumlah sekarang sudah cukup.
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <label className="flex items-start gap-2.5 bg-white border border-outline-variant rounded-xl px-4 py-3 mb-4 cursor-pointer">
               <input
@@ -218,11 +348,21 @@ export default function FormReservasi() {
         <p className="text-xs font-semibold text-[#F4A261] mb-1.5">
           {jenis === 'menginap' ? 'Tanggal Check-in' : 'Tanggal Kunjungan'}
         </p>
+        {/* Aturan H-1 disampaikan sebelum wisatawan membuka kalender, bukan setelah gagal
+            memilih tanggal — supaya tidak ada yang mengira bisa berangkat di hari yang sama. */}
+        <p className="flex items-start gap-1.5 text-[11px] text-on-surface-variant leading-relaxed mb-2">
+          <span className="material-symbols-outlined text-[14px] leading-none mt-px">schedule</span>
+          <span>
+            Kunjungan paling cepat dijadwalkan <span className="font-semibold text-on-surface">besok</span>.
+            Reservasi untuk hari yang sama tidak dapat dilayani karena Pengantar Pulau perlu waktu
+            memverifikasi bukti transfer dan menyusun manifest keberangkatan.
+          </span>
+        </p>
         <input
           type="date"
           className="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 mb-4 text-sm outline-none"
           value={tanggal}
-          min={hariIni}
+          min={tanggalMinimal}
           onChange={(e) => {
             setTanggal(e.target.value);
             if (tanggalSelesai && tanggalSelesai <= e.target.value) setTanggalSelesai('');
@@ -271,15 +411,30 @@ export default function FormReservasi() {
           <div className="flex items-center gap-3">
             <button
               className="w-8 h-8 bg-surface-container rounded-full text-on-surface"
-              onClick={() => setJumlahOrang((n) => Math.max(1, n - 1))}
+              onClick={() => setJumlahOrang(Math.max(1, jumlahOrangAman - 1))}
               type="button"
             >
               -
             </button>
-            <span className="font-semibold text-on-surface">{jumlahOrang}</span>
+            <input
+              type="number"
+              min="1"
+              inputMode="numeric"
+              className="w-12 text-center font-semibold text-on-surface bg-transparent outline-none border-b border-transparent focus:border-[#004873]"
+              value={jumlahOrang}
+              onChange={(e) => {
+                const val = e.target.value;
+                // Boleh sementara kosong (misal user select-all lalu ngetik ulang) —
+                // dijaga aman lewat jumlahOrangAman di atas, dirapikan lagi saat blur.
+                if (val === '') { setJumlahOrang(''); return; }
+                const n = parseInt(val, 10);
+                if (!Number.isNaN(n)) setJumlahOrang(Math.max(1, n));
+              }}
+              onBlur={() => setJumlahOrang(jumlahOrangAman)}
+            />
             <button
               className="w-8 h-8 bg-[#004873] text-white rounded-full"
-              onClick={() => setJumlahOrang((n) => n + 1)}
+              onClick={() => setJumlahOrang(jumlahOrangAman + 1)}
               type="button"
             >
               +

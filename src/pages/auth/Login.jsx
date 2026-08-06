@@ -53,7 +53,27 @@ export default function Login() {
       else if (user.role === 'pengantar_pulau') navigate('/pengantar/dashboard');
       else navigate('/pengelola/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Email atau password salah.');
+      const status = err.response?.status;
+      const pesanServer = err.response?.data?.message;
+
+      if (status === 429) {
+        // Laravel membatasi percobaan login untuk mencegah penebakan password. Header
+        // Retry-After berisi sisa waktu tunggu dalam detik.
+        const detik = Number(err.response?.headers?.['retry-after']) || 60;
+        const menit = Math.ceil(detik / 60);
+        setError(
+          `Terlalu banyak percobaan login. Demi keamanan, silakan tunggu sekitar ${menit} menit lagi sebelum mencoba kembali.`
+        );
+      } else if (status === 422) {
+        setError(pesanServer || 'Email dan password wajib diisi dengan benar.');
+      } else if (status === 401) {
+        setError(pesanServer || 'Email atau password salah. Periksa kembali, atau daftar dulu kalau belum punya akun.');
+      } else if (!err.response) {
+        setError('Tidak dapat terhubung ke server. Pastikan koneksi internet aktif, lalu coba lagi.');
+      } else {
+        setError(pesanServer || 'Terjadi kesalahan pada server. Coba beberapa saat lagi.');
+      }
+
       setPerluVerifikasi(Boolean(err.response?.data?.perlu_verifikasi_email));
     } finally {
       setLoading(false);
@@ -103,8 +123,15 @@ export default function Login() {
           </div>
 
           {error && (
-            <div className="mb-4">
-              <p className="text-error text-sm">{error}</p>
+            <div
+              role="alert"
+              className="mb-4 flex items-start gap-2.5 rounded-xl border border-error/30 bg-error/10 px-3.5 py-3"
+            >
+              <span className="material-symbols-outlined text-error text-[20px] leading-none mt-px">
+                error
+              </span>
+              <div className="flex-1">
+                <p className="text-error text-sm font-medium leading-relaxed">{error}</p>
               {perluVerifikasi && (
                 <div className="mt-2">
                   {kirimUlangStatus === 'terkirim' ? (
@@ -126,6 +153,7 @@ export default function Login() {
                   )}
                 </div>
               )}
+              </div>
             </div>
           )}
 

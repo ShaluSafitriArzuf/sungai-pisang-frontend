@@ -9,6 +9,8 @@ import { ikonWahana, fotoAkomodasiFallback } from '../../utils/tampilanKegiatan'
 import { FASILITAS_OPSI } from '../../utils/tampilanFasilitas';
 import { jarakKm } from '../../utils/jarak';
 import { pulauIcon, pengantarIcon } from '../../utils/mapIcons';
+import { formatRupiah, hargaMulaiPerOrang, hargaMenginapPerOrang, akomodasiTermurah } from '../../utils/harga';
+import { FASILITAS_AKOMODASI_OPSI, labelFasilitasAkomodasi, ikonFasilitasAkomodasi } from '../../utils/tampilanFasilitasAkomodasi';
 import { useToast } from '../../context/ToastContext';
 import { waLink } from '../../utils/kontak';
 
@@ -85,9 +87,11 @@ export default function DetailPulau() {
     }
   }
 
-  const hargaMulai = pulau.akomodasi?.length
-    ? Math.min(...pulau.akomodasi.map((a) => Number(a.harga_per_malam)))
-    : Number(pulau.harga_tiket_masuk);
+  // "Mulai dari" = biaya minimum per orang untuk berkunjung (kapal + tiket masuk One Day
+  // Trip). Aturannya ada di utils/harga.js supaya sama dengan yang dipakai kartu Beranda.
+  const hargaMulai = hargaMulaiPerOrang(pulau);
+  const hargaMenginap = hargaMenginapPerOrang(pulau);
+  const termurahAkomodasi = akomodasiTermurah(pulau);
 
   return (
     <div className="max-w-md mx-auto pb-24 bg-background min-h-screen">
@@ -166,11 +170,31 @@ export default function DetailPulau() {
 
             <div className="flex gap-3">
               {pengantarUtama.foto && (
-                <img
-                  src={pengantarUtama.foto}
-                  alt="Titik kumpul Pengantar Pulau"
-                  className="w-16 h-16 shrink-0 object-cover rounded-lg"
-                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLightbox({
+                      foto: pengantarUtama.foto,
+                      tipe: 'foto',
+                      judul: `Titik kumpul / rumah ${pengantarUtama.name}`,
+                    })
+                  }
+                  className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden group"
+                  aria-label="Perbesar foto titik kumpul Pengantar Pulau"
+                >
+                  <img
+                    src={pengantarUtama.foto}
+                    alt="Titik kumpul Pengantar Pulau"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Penanda bahwa foto bisa diperbesar — disamakan dengan foto akomodasi
+                      supaya perilakunya konsisten di seluruh halaman. */}
+                  <span className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white text-[18px] drop-shadow">
+                      zoom_in
+                    </span>
+                  </span>
+                </button>
               )}
 
               <div className="flex-1 min-w-0">
@@ -264,6 +288,65 @@ export default function DetailPulau() {
           <p className="text-sm text-on-surface-variant leading-relaxed">{pulau.deskripsi}</p>
         </div>
 
+        {/* Rincian Biaya — ditampilkan terbuka supaya wisatawan tahu persis komponen biaya
+            sebelum masuk form reservasi, tidak kaget saat melihat total di halaman berikutnya. */}
+        <div className="mt-5">
+          <p className="font-bold text-on-surface mb-2">Rincian Biaya per Orang</p>
+          <div className="bg-white rounded-2xl border border-outline-variant overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="flex items-center gap-2 text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px] text-primary">directions_boat</span>
+                Kapal penyeberangan
+              </span>
+              <span className="text-sm font-semibold text-on-surface">
+                {formatRupiah(pulau.harga_penyeberangan)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant">
+              <span className="flex items-center gap-2 text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px] text-primary">confirmation_number</span>
+                Tiket masuk — One Day Trip
+              </span>
+              <span className="text-sm font-semibold text-on-surface">
+                {formatRupiah(pulau.harga_tiket_masuk_one_day)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant">
+              <span className="flex items-center gap-2 text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px] text-primary">confirmation_number</span>
+                Tiket masuk — Menginap
+              </span>
+              <span className="text-sm font-semibold text-on-surface">
+                {formatRupiah(pulau.harga_tiket_masuk_menginap)}
+              </span>
+            </div>
+
+            <div className="px-4 py-3 border-t border-outline-variant bg-surface-container/60">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-on-surface">One Day Trip</span>
+                <span className="text-sm font-bold text-primary">{formatRupiah(hargaMulai)}/orang</span>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-sm font-semibold text-on-surface">Menginap</span>
+                <span className="text-sm font-bold text-primary">
+                  {formatRupiah(hargaMenginap)}/orang
+                  {termurahAkomodasi !== null && (
+                    <span className="font-normal text-on-surface-variant"> + akomodasi</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-on-surface-variant leading-relaxed mt-2">
+            {termurahAkomodasi !== null
+              ? `Akomodasi dihitung per unit per malam, mulai ${formatRupiah(termurahAkomodasi)}. Pilihan “Bawa Tenda Sendiri” tidak dikenakan biaya akomodasi.`
+              : 'Belum ada akomodasi berbayar di pulau ini. Untuk menginap, wisatawan membawa tenda sendiri.'}
+          </p>
+        </div>
+
         {/* Fasilitas Pulau */}
         {pulau.fasilitas?.length > 0 && (
           <div className="mt-5">
@@ -338,9 +421,13 @@ export default function DetailPulau() {
                 const { icon, warna } = ikonWahana(w.nama);
                 return (
                   <div key={w.id} className="bg-white rounded-xl shadow-sm p-3 flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${warna}`}>
-                      <span className="material-symbols-outlined text-[20px]">{icon}</span>
-                    </div>
+                    {w.foto ? (
+                      <img src={w.foto} alt={w.nama} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${warna}`}>
+                        <span className="material-symbols-outlined text-[20px]">{icon}</span>
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-semibold text-on-surface">{w.nama}</p>
@@ -369,7 +456,7 @@ export default function DetailPulau() {
               {pulau.akomodasi.map((a, i) => {
                 const fotos = [a.foto || fotoAkomodasiFallback(a.tipe), ...(a.foto_tambahan?.map((f) => f.foto) || [])];
                 return (
-                  <div key={a.id} className="min-w-[160px] bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div key={a.id} className="min-w-[190px] max-w-[190px] bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <button
                       type="button"
                       onClick={() => setAkomodasiLightbox({ nama: a.nama, fotos, index: 0 })}
@@ -388,12 +475,45 @@ export default function DetailPulau() {
                         </span>
                       )}
                     </button>
-                    <div className="p-3">
-                      <p className="text-sm font-semibold text-on-surface">{a.nama}</p>
-                      <p className="text-[11px] text-on-surface-variant capitalize">{a.tipe}</p>
-                      <p className="text-sm font-bold text-primary mt-1">
-                        Rp{Number(a.harga_per_malam).toLocaleString('id-ID')}/malam
-                      </p>
+
+                    <div className="p-3 flex-1 flex flex-col">
+                      <p className="text-sm font-semibold text-on-surface leading-tight">{a.nama}</p>
+
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] text-on-surface-variant capitalize">{a.tipe}</span>
+                        {a.kapasitas && (
+                          <span className="flex items-center gap-0.5 text-[11px] text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[13px]">group</span>
+                            {a.kapasitas} orang
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Fasilitas unit — pembeda utama antar akomodasi (ber-AC, berkipas,
+                          atau pondok terbuka). Ditampilkan seluruhnya, tidak dipotong, karena
+                          jumlahnya sedikit dan justru inilah yang dicari wisatawan. */}
+                      {a.fasilitas?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {a.fasilitas.map((f) => (
+                            <span
+                              key={f}
+                              className="flex items-center gap-0.5 bg-surface-container text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded-md"
+                            >
+                              <span className="material-symbols-outlined text-[12px] text-primary">
+                                {ikonFasilitasAkomodasi(f)}
+                              </span>
+                              {labelFasilitasAkomodasi(f)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-auto pt-2">
+                        <p className="text-sm font-bold text-primary leading-tight">
+                          {formatRupiah(a.harga_per_malam)}
+                          <span className="text-[11px] font-normal text-on-surface-variant">/malam</span>
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );
@@ -468,10 +588,14 @@ export default function DetailPulau() {
 
       {/* Bar bawah sticky */}
       <div className="fixed bottom-16 left-0 right-0 max-w-md mx-auto px-4 pb-3 pt-2 bg-background/95 backdrop-blur-sm border-t border-outline-variant flex items-center justify-between gap-4">
-        <div>
-          <p className="text-[11px] text-on-surface-variant">Mulai dari</p>
-          <p className="text-lg font-bold text-on-surface">
-            Rp{hargaMulai.toLocaleString('id-ID')}<span className="text-xs font-normal">/pax</span>
+        <div className="min-w-0">
+          <p className="text-[11px] text-on-surface-variant leading-none">Mulai dari</p>
+          <p className="text-lg font-bold text-on-surface leading-tight">
+            {formatRupiah(hargaMulai)}
+            <span className="text-xs font-normal text-on-surface-variant">/orang</span>
+          </p>
+          <p className="text-[10px] text-on-surface-variant leading-none">
+            Kapal + tiket masuk (One Day Trip)
           </p>
         </div>
         <button
@@ -506,10 +630,16 @@ export default function DetailPulau() {
           ) : (
             <img
               src={lightbox.foto}
-              alt="Galeri"
+              alt={lightbox.judul || 'Galeri'}
               className="max-w-full max-h-full rounded-xl object-contain"
               onClick={(e) => e.stopPropagation()}
             />
+          )}
+
+          {lightbox.judul && (
+            <p className="absolute bottom-6 left-0 right-0 text-center text-white text-sm px-6">
+              {lightbox.judul}
+            </p>
           )}
         </div>
       )}

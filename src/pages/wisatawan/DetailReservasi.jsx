@@ -74,7 +74,19 @@ export default function DetailReservasi() {
       <div className="card mb-4 space-y-1 text-sm">
         <div className="flex justify-between"><span>Pulau</span><span className="font-semibold">{r.pulau?.nama}</span></div>
         <div className="flex justify-between"><span>Jenis</span><span>{r.jenis === 'one_day_trip' ? 'One Day Trip' : 'Menginap'}</span></div>
-        {r.akomodasi && <div className="flex justify-between"><span>Akomodasi</span><span>{r.akomodasi.nama}</span></div>}
+        {r.akomodasi && (
+          <div className="flex justify-between">
+            <span>Akomodasi</span>
+            <span className="text-right">
+              {r.akomodasi.nama}
+              {r.jumlah_unit_dipesan > 1 && (
+                <span className="block text-xs text-on-surface-variant">
+                  {r.jumlah_unit_dipesan} unit
+                </span>
+              )}
+            </span>
+          </div>
+        )}
         {r.jenis === 'menginap' && r.bawa_tenda_sendiri && (
           <div className="flex justify-between"><span>Akomodasi</span><span>Bawa Tenda Sendiri</span></div>
         )}

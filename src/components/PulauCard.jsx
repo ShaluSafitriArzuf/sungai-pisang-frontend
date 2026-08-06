@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { fotoPulauFallback } from '../utils/fotoPulau';
+import { formatRupiah, hargaMulaiPerOrang } from '../utils/harga';
 
 export default function PulauCard({ pulau }) {
   const deskripsiSingkat = pulau.deskripsi
@@ -39,13 +40,17 @@ export default function PulauCard({ pulau }) {
         </p>
         <p className="text-xs text-on-surface-variant mt-2 leading-relaxed">{deskripsiSingkat}</p>
 
-        <div className="flex justify-between items-center mt-3">
-          <p className="text-xs text-on-surface-variant">
-            Tiket mulai{' '}
-            <span className="font-bold text-primary text-sm">
-              Rp{Number(pulau.harga_tiket_masuk).toLocaleString('id-ID')}
-            </span>
-          </p>
+        <div className="flex justify-between items-end mt-3">
+          <div>
+            <p className="text-[11px] text-on-surface-variant leading-none">Mulai dari</p>
+            <p className="font-bold text-primary text-base leading-tight mt-0.5">
+              {formatRupiah(hargaMulaiPerOrang(pulau))}
+              <span className="font-normal text-[11px] text-on-surface-variant">/orang</span>
+            </p>
+            <p className="text-[10px] text-on-surface-variant leading-none mt-0.5">
+              Kapal + tiket masuk
+            </p>
+          </div>
           <Link
             to={`/pulau/${pulau.id}`}
             className="bg-[#F4A261] text-white text-xs font-semibold px-4 py-2 rounded-xl active:scale-95 transition-transform"

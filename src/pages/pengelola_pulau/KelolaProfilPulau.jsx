@@ -37,6 +37,7 @@ export default function KelolaProfilPulau() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [customFasilitas, setCustomFasilitas] = useState('');
 
   useEffect(() => {
     if (user?.pulau_id) api.get(`/pulau/${user.pulau_id}`).then((res) => setForm(res.data));
@@ -59,6 +60,28 @@ export default function KelolaProfilPulau() {
     });
   }
 
+  // Fasilitas di luar 8 pilihan tetap (mis. "WiFi Gratis", "Kamar Ganti") — disimpan sebagai
+  // teks bebas di kolom fasilitas yang sama, hanya beda cara ditampilkan (chip + tombol hapus,
+  // bukan tombol toggle) karena tidak ada di daftar FASILITAS_OPSI.
+  const kunciTetap = FASILITAS_OPSI.map((f) => f.key);
+  const fasilitasCustom = (form.fasilitas || []).filter((f) => !kunciTetap.includes(f));
+
+  function tambahFasilitasCustom() {
+    const val = customFasilitas.trim();
+    if (!val) return;
+    const existing = form.fasilitas || [];
+    if (existing.some((f) => f.toLowerCase() === val.toLowerCase())) {
+      setCustomFasilitas('');
+      return;
+    }
+    setForm({ ...form, fasilitas: [...existing, val] });
+    setCustomFasilitas('');
+  }
+
+  function hapusFasilitasCustom(val) {
+    setForm({ ...form, fasilitas: (form.fasilitas || []).filter((f) => f !== val) });
+  }
+
   async function simpan() {
     setLoading(true);
     setError('');
@@ -68,7 +91,9 @@ export default function KelolaProfilPulau() {
       formData.append('deskripsi', form.deskripsi || '');
       formData.append('luas', form.luas || '');
       formData.append('badge', form.badge || '');
-      formData.append('harga_tiket_masuk', form.harga_tiket_masuk || '');
+      formData.append('harga_tiket_masuk_one_day', form.harga_tiket_masuk_one_day || '');
+      formData.append('harga_tiket_masuk_menginap', form.harga_tiket_masuk_menginap || '');
+      formData.append('harga_penyeberangan', form.harga_penyeberangan || '');
       formData.append('jam_operasional_genset', form.jam_operasional_genset || '');
       formData.append('regulasi', form.regulasi || '');
       (form.fasilitas || []).forEach((f) => formData.append('fasilitas[]', f));
@@ -156,13 +181,33 @@ export default function KelolaProfilPulau() {
             />
           </Field>
 
-          <Field label="Harga Tiket Masuk (Rp/orang)" icon="confirmation_number">
+          <Field label="Tiket Masuk One Day Trip (Rp/orang)" icon="confirmation_number">
             <input
               className={inputCls}
               type="number"
-              placeholder="mis. 15000"
-              value={form.harga_tiket_masuk || ''}
-              onChange={(e) => setForm({ ...form, harga_tiket_masuk: e.target.value })}
+              placeholder="mis. 30000"
+              value={form.harga_tiket_masuk_one_day || ''}
+              onChange={(e) => setForm({ ...form, harga_tiket_masuk_one_day: e.target.value })}
+            />
+          </Field>
+
+          <Field label="Tiket Masuk Menginap (Rp/orang)" icon="confirmation_number">
+            <input
+              className={inputCls}
+              type="number"
+              placeholder="mis. 50000"
+              value={form.harga_tiket_masuk_menginap || ''}
+              onChange={(e) => setForm({ ...form, harga_tiket_masuk_menginap: e.target.value })}
+            />
+          </Field>
+
+          <Field label="Tarif Kapal Penyeberangan (Rp/orang)" icon="directions_boat">
+            <input
+              className={inputCls}
+              type="number"
+              placeholder="mis. 50000"
+              value={form.harga_penyeberangan || ''}
+              onChange={(e) => setForm({ ...form, harga_penyeberangan: e.target.value })}
             />
           </Field>
 
@@ -194,6 +239,51 @@ export default function KelolaProfilPulau() {
                 );
               })}
             </div>
+
+            {fasilitasCustom.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {fasilitasCustom.map((val) => (
+                  <span
+                    key={val}
+                    className="flex items-center gap-1.5 bg-[#004873] text-white text-xs font-medium rounded-full pl-3 pr-1.5 py-1.5"
+                  >
+                    {val}
+                    <button
+                      type="button"
+                      onClick={() => hapusFasilitasCustom(val)}
+                      className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-[12px]">close</span>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-2.5">
+              <input
+                className={inputCls}
+                placeholder="Tambah fasilitas lain (mis. WiFi Gratis)"
+                value={customFasilitas}
+                onChange={(e) => setCustomFasilitas(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    tambahFasilitasCustom();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={tambahFasilitasCustom}
+                className="px-4 rounded-xl bg-[#F4A261] text-white text-sm font-semibold shrink-0"
+              >
+                Tambah
+              </button>
+            </div>
+            <p className="text-[10px] text-on-surface-variant mt-1">
+              Kalau fasilitasnya tidak ada di 8 pilihan di atas, tulis sendiri lalu tekan Tambah.
+            </p>
           </Field>
 
           <Field label="Regulasi / Tata Tertib Pulau" icon="gavel">

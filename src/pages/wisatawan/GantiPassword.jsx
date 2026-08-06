@@ -79,12 +79,21 @@ export default function GantiPassword() {
         )}
 
         <div className="bg-white rounded-xl border border-outline-variant p-4 space-y-4">
-          <FieldPassword
-            label="Password Lama"
-            value={form.password_lama}
-            onChange={(e) => setForm({ ...form, password_lama: e.target.value })}
-            error={errors.password_lama}
-          />
+          <div>
+            <FieldPassword
+              label="Password Lama"
+              value={form.password_lama}
+              onChange={(e) => setForm({ ...form, password_lama: e.target.value })}
+              error={errors.password_lama}
+            />
+            <button
+              type="button"
+              onClick={() => navigate('/lupa-password')}
+              className="text-[11px] text-[#004873] font-semibold mt-1.5"
+            >
+              Lupa password lama?
+            </button>
+          </div>
           <FieldPassword
             label="Password Baru"
             value={form.password_baru}

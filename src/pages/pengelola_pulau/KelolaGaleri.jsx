@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import TopNav from '../../components/TopNav';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const MENU = [
   { to: '/pengelola/dashboard', label: 'Dashboard' },
@@ -21,6 +22,7 @@ export default function KelolaGaleri() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmHapusId, setConfirmHapusId] = useState(null);
 
   function muatUlang() {
     api.get('/galeri-foto').then((res) => setList(res.data));
@@ -63,9 +65,13 @@ export default function KelolaGaleri() {
     }
   }
 
-  async function hapus(id) {
-    if (!confirm('Hapus item galeri ini?')) return;
-    await api.delete(`/galeri-foto/${id}`);
+  function hapus(id) {
+    setConfirmHapusId(id);
+  }
+
+  async function konfirmasiHapus() {
+    await api.delete(`/galeri-foto/${confirmHapusId}`);
+    setConfirmHapusId(null);
     muatUlang();
   }
 
@@ -174,6 +180,16 @@ export default function KelolaGaleri() {
           {list.length === 0 && <p className="text-gray-400 text-sm text-center col-span-3 py-4">Belum ada foto/video.</p>}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!confirmHapusId}
+        title="Hapus Item Galeri"
+        message="Hapus foto/video ini dari galeri? Tindakan ini tidak bisa dibatalkan."
+        danger
+        confirmText="Hapus"
+        onConfirm={konfirmasiHapus}
+        onCancel={() => setConfirmHapusId(null)}
+      />
     </div>
   );
 }

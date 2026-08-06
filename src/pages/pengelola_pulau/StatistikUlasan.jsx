@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import TopNav from '../../components/TopNav';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const MENU = [
   { to: '/pengelola/dashboard', label: 'Dashboard' },
@@ -24,11 +25,26 @@ export default function StatistikUlasan() {
   const [tab, setTab] = useState('statistik');
   const [reservasi, setReservasi] = useState([]);
   const [ulasan, setUlasan] = useState([]);
+  const [confirmHapusUlasan, setConfirmHapusUlasan] = useState(null);
+
+  function muatUlasan() {
+    if (user?.pulau_id) api.get(`/ulasan?pulau_id=${user.pulau_id}`).then((res) => setUlasan(res.data.data || res.data));
+  }
 
   useEffect(() => {
     api.get('/reservasi').then((res) => setReservasi(res.data.data || res.data));
-    if (user?.pulau_id) api.get(`/ulasan?pulau_id=${user.pulau_id}`).then((res) => setUlasan(res.data.data || res.data));
+    muatUlasan();
   }, [user]);
+
+  function hapusUlasan(u) {
+    setConfirmHapusUlasan(u);
+  }
+
+  async function konfirmasiHapusUlasan() {
+    await api.delete(`/ulasan/${confirmHapusUlasan.id}`);
+    setConfirmHapusUlasan(null);
+    muatUlasan();
+  }
 
   // /reservasi untuk pengelola_pulau berisi SEMUA jenis (menginap & one day trip) yang valid —
   // jadi wajib dipisah per jenis di sini, jangan digabung lalu dikira "menginap" semua.
@@ -152,9 +168,17 @@ export default function StatistikUlasan() {
             </div>
             {ulasan.map((u) => (
               <div key={u.id} className="bg-white rounded-xl shadow-sm p-3.5 text-sm">
-                <p className="font-semibold text-on-surface">
-                  {u.wisatawan?.name} <span className="text-yellow-500">{'★'.repeat(u.rating)}</span>
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-on-surface">
+                    {u.wisatawan?.name} <span className="text-yellow-500">{'★'.repeat(u.rating)}</span>
+                  </p>
+                  <button
+                    onClick={() => hapusUlasan(u)}
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600 whitespace-nowrap shrink-0"
+                  >
+                    Hapus
+                  </button>
+                </div>
                 <p className="text-on-surface-variant mt-0.5">{u.komentar}</p>
               </div>
             ))}
@@ -162,6 +186,16 @@ export default function StatistikUlasan() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmHapusUlasan}
+        title="Hapus Ulasan"
+        message={confirmHapusUlasan ? `Hapus ulasan dari "${confirmHapusUlasan.wisatawan?.name}"? Tindakan ini tidak bisa dibatalkan.` : ''}
+        danger
+        confirmText="Hapus"
+        onConfirm={konfirmasiHapusUlasan}
+        onCancel={() => setConfirmHapusUlasan(null)}
+      />
     </div>
   );
 }

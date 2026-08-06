@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import TopNav from '../../components/TopNav';
+import ConfirmModal from '../../components/ConfirmModal';
+import { FASILITAS_AKOMODASI_OPSI } from '../../utils/tampilanFasilitasAkomodasi';
 
 const MENU = [
   { to: '/pengelola/dashboard', label: 'Dashboard' },
@@ -29,7 +31,7 @@ const inputCls =
 
 const TIPE_ICON = { cottage: 'cottage', gazebo: 'deck', tenda: 'cabin' };
 
-const KOSONG = { nama: '', tipe: 'cottage', harga_per_malam: '', jumlah_unit: '', deskripsi: '' };
+const KOSONG = { nama: '', tipe: 'cottage', harga_per_malam: '', jumlah_unit: '', kapasitas: '', deskripsi: '', fasilitas: [] };
 
 // Kelola foto TAMBAHAN 1 akomodasi (selain foto utama) — bisa lebih dari satu, supaya nanti
 // bisa ditambah foto interior/sudut lain, dan tampil sebagai carousel yang bisa digeser di
@@ -37,6 +39,7 @@ const KOSONG = { nama: '', tipe: 'cottage', harga_per_malam: '', jumlah_unit: ''
 function FotoTambahanManager({ akomodasi, onUbah }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmFotoId, setConfirmFotoId] = useState(null);
 
   async function tambahFoto(e) {
     const file = e.target.files[0];
@@ -56,9 +59,13 @@ function FotoTambahanManager({ akomodasi, onUbah }) {
     }
   }
 
-  async function hapusFoto(fotoId) {
-    if (!confirm('Hapus foto ini?')) return;
-    await api.delete(`/akomodasi/${akomodasi.id}/foto/${fotoId}`);
+  function hapusFoto(fotoId) {
+    setConfirmFotoId(fotoId);
+  }
+
+  async function konfirmasiHapusFoto() {
+    await api.delete(`/akomodasi/${akomodasi.id}/foto/${confirmFotoId}`);
+    setConfirmFotoId(null);
     onUbah();
   }
 
@@ -89,6 +96,16 @@ function FotoTambahanManager({ akomodasi, onUbah }) {
         </label>
       </div>
       {error && <p className="text-[10px] text-red-600 mt-1.5">{error}</p>}
+
+      <ConfirmModal
+        open={!!confirmFotoId}
+        title="Hapus Foto"
+        message="Hapus foto tambahan ini? Tindakan ini tidak bisa dibatalkan."
+        danger
+        confirmText="Hapus"
+        onConfirm={konfirmasiHapusFoto}
+        onCancel={() => setConfirmFotoId(null)}
+      />
     </div>
   );
 }
@@ -103,9 +120,13 @@ export default function KelolaAkomodasi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [editId, setEditId] = useState(null);
+  const [confirmHapus, setConfirmHapus] = useState(null);
 
   function muatUlang() {
-    api.get(`/akomodasi?pulau_id=${user.pulau_id}`).then((res) => setList(res.data));
+    // Pakai endpoint khusus pengelola (semua status, aktif maupun nonaktif) supaya akomodasi
+    // yang baru dinonaktifkan tetap tampil di sini, bukan cuma yang aktif=true.
+    api.get('/akomodasi/kelola/semua').then((res) => setList(res.data));
   }
 
   useEffect(() => { if (user?.pulau_id) muatUlang(); }, [user]);
@@ -122,14 +143,26 @@ export default function KelolaAkomodasi() {
     setError('');
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => formData.append(k, v));
+      Object.entries(form).forEach(([k, v]) => {
+        // fasilitas berupa array — dikirim sebagai fasilitas[] supaya terbaca Laravel
+        // sebagai array, bukan string gabungan.
+        if (k === 'fasilitas') {
+          (v || []).forEach((f) => formData.append('fasilitas[]', f));
+        } else {
+          formData.append(k, v);
+        }
+      });
       if (fotoFile) formData.append('foto', fotoFile);
 
-      await api.post('/akomodasi', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setShowForm(false);
-      setForm(KOSONG);
-      setFotoFile(null);
-      setPreviewUrl('');
+      if (editId) {
+        // Laravel tidak bisa parse file upload lewat method PUT asli, jadi dikirim POST
+        // dengan _method=PUT (method spoofing) — pola yang sama dipakai di Kelola Profil Pulau.
+        formData.append('_method', 'PUT');
+        await api.post(`/akomodasi/${editId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      } else {
+        await api.post('/akomodasi', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      }
+      tutupForm();
       muatUlang();
     } catch (err) {
       const errs = err.response?.data?.errors;
@@ -138,6 +171,56 @@ export default function KelolaAkomodasi() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function tutupForm() {
+    setShowForm(false);
+    setEditId(null);
+    setForm(KOSONG);
+    setFotoFile(null);
+    setPreviewUrl('');
+    setError('');
+  }
+
+  function toggleForm() {
+    if (showForm) {
+      tutupForm();
+    } else {
+      setEditId(null);
+      setForm(KOSONG);
+      setFotoFile(null);
+      setPreviewUrl('');
+      setError('');
+      setShowForm(true);
+    }
+  }
+
+  function mulaiEdit(a) {
+    setEditId(a.id);
+    setForm({
+      nama: a.nama,
+      tipe: a.tipe,
+      harga_per_malam: a.harga_per_malam,
+      jumlah_unit: a.jumlah_unit,
+      kapasitas: a.kapasitas || '',
+      deskripsi: a.deskripsi || '',
+      fasilitas: a.fasilitas || [],
+    });
+    setFotoFile(null);
+    setPreviewUrl(a.foto || '');
+    setError('');
+    setExpandedId(null);
+    setShowForm(true);
+  }
+
+  function hapus(a) {
+    setConfirmHapus(a);
+  }
+
+  async function konfirmasiHapus() {
+    await api.delete(`/akomodasi/${confirmHapus.id}`);
+    setConfirmHapus(null);
+    muatUlang();
   }
 
   async function toggleAktif(a) {
@@ -152,7 +235,7 @@ export default function KelolaAkomodasi() {
       <div className="px-4 py-4">
         <button
           className="w-full bg-[#004873] text-white font-semibold py-3 rounded-xl mb-4 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
-          onClick={() => setShowForm((s) => !s)}
+          onClick={toggleForm}
         >
           <span className="material-symbols-outlined text-[18px]">{showForm ? 'close' : 'add'}</span>
           {showForm ? 'Tutup Form' : 'Tambah Akomodasi'}
@@ -160,9 +243,12 @@ export default function KelolaAkomodasi() {
 
         {showForm && (
           <div className="bg-white rounded-xl border border-outline-variant p-4 space-y-4 mb-4">
+            <p className="font-semibold text-sm text-on-surface">{editId ? 'Edit Akomodasi' : 'Tambah Akomodasi Baru'}</p>
             <div className="bg-[#004873]/5 text-[#004873] text-[11px] rounded-xl px-3.5 py-2.5 flex items-start gap-2">
               <span className="material-symbols-outlined text-[15px] shrink-0 mt-0.5">info</span>
-              Foto di sini jadi foto utama/cover-nya. Setelah disimpan, kamu bisa tambah foto lain (interior, sudut lain) dengan klik akomodasinya di daftar bawah.
+              {editId
+                ? 'Ubah data di bawah lalu simpan. Foto hanya berubah kalau kamu pilih foto baru.'
+                : 'Foto di sini jadi foto utama/cover-nya. Setelah disimpan, kamu bisa tambah foto lain (interior, sudut lain) dengan klik akomodasinya di daftar bawah.'}
             </div>
 
             {error && (
@@ -205,6 +291,54 @@ export default function KelolaAkomodasi() {
               </p>
             </Field>
 
+            <Field label="Kapasitas per Unit (orang)" icon="group">
+              <input
+                className={inputCls}
+                type="number"
+                min="1"
+                placeholder="mis. 4"
+                value={form.kapasitas}
+                onChange={(e) => setForm({ ...form, kapasitas: e.target.value })}
+              />
+              <p className="text-[10px] text-on-surface-variant mt-1">
+                Dipakai menghitung perkiraan harga per orang di halaman Detail Pulau.
+              </p>
+            </Field>
+
+            <Field label="Fasilitas Unit" icon="checklist">
+              <div className="grid grid-cols-2 gap-2">
+                {FASILITAS_AKOMODASI_OPSI.map((f) => {
+                  const aktif = (form.fasilitas || []).includes(f.key);
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          fasilitas: aktif
+                            ? form.fasilitas.filter((x) => x !== f.key)
+                            : [...(form.fasilitas || []), f.key],
+                        })
+                      }
+                      className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-[11px] text-left transition-colors ${
+                        aktif
+                          ? 'border-[#004873] bg-[#004873]/10 text-[#004873] font-semibold'
+                          : 'border-outline-variant bg-white text-on-surface-variant'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px] shrink-0">{f.icon}</span>
+                      <span className="leading-tight">{f.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-on-surface-variant mt-2">
+                Ketuk untuk memilih. Fasilitas inilah yang membedakan tiap unit di mata wisatawan
+                — misalnya ber-AC, berkipas angin, atau pondok terbuka tanpa dinding.
+              </p>
+            </Field>
+
             <Field label="Deskripsi" icon="description">
               <textarea className={inputCls} rows={3} placeholder="Ceritakan fasilitas & kapasitasnya..." value={form.deskripsi} onChange={(e) => setForm({ ...form, deskripsi: e.target.value })} />
             </Field>
@@ -214,7 +348,7 @@ export default function KelolaAkomodasi() {
               onClick={simpan}
               disabled={loading}
             >
-              {loading ? 'Menyimpan...' : 'Simpan Akomodasi'}
+              {loading ? 'Menyimpan...' : editId ? 'Simpan Perubahan' : 'Simpan Akomodasi'}
             </button>
           </div>
         )}
@@ -238,6 +372,8 @@ export default function KelolaAkomodasi() {
                   <p className="font-semibold text-sm text-on-surface truncate">{a.nama}</p>
                   <p className="text-[11px] text-on-surface-variant capitalize">
                     {a.tipe} · Rp{Number(a.harga_per_malam).toLocaleString('id-ID')}/malam · {a.jumlah_unit} unit
+                    {a.kapasitas ? ` · muat ${a.kapasitas} orang` : ''}
+                    {a.fasilitas?.length ? ` · ${a.fasilitas.length} fasilitas` : ''}
                     {a.foto_tambahan?.length > 0 && ` · ${a.foto_tambahan.length} foto tambahan`}
                   </p>
                 </div>
@@ -252,12 +388,42 @@ export default function KelolaAkomodasi() {
                 </span>
               </button>
 
-              {expandedId === a.id && <FotoTambahanManager akomodasi={a} onUbah={muatUlang} />}
+              {expandedId === a.id && (
+                <div>
+                  <div className="border-t border-outline-variant px-3.5 py-3 flex gap-2">
+                    <button
+                      onClick={() => mulaiEdit(a)}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#004873] bg-[#004873]/5 rounded-lg py-2"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">edit</span>
+                      Edit Data
+                    </button>
+                    <button
+                      onClick={() => hapus(a)}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-lg py-2"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">delete</span>
+                      Hapus
+                    </button>
+                  </div>
+                  <FotoTambahanManager akomodasi={a} onUbah={muatUlang} />
+                </div>
+              )}
             </div>
           ))}
           {list.length === 0 && <p className="text-gray-400 text-sm text-center py-4">Belum ada akomodasi.</p>}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!confirmHapus}
+        title="Hapus Akomodasi"
+        message={confirmHapus ? `Hapus akomodasi "${confirmHapus.nama}"? Tindakan ini tidak bisa dibatalkan.` : ''}
+        danger
+        confirmText="Hapus"
+        onConfirm={konfirmasiHapus}
+        onCancel={() => setConfirmHapus(null)}
+      />
     </div>
   );
 }
