@@ -247,7 +247,7 @@ export default function Login() {
               Cuma Google yang ditampilkan karena itu satu-satunya yang sudah benar-benar
               berfungsi (lihat GoogleAuthController di backend). */}
           <a
-            href="http://localhost:8000/api/auth/google/redirect"
+            href="https://jelajahbahari.my.id/api/auth/google/redirect"
             className="flex items-center justify-center gap-2 py-3 border border-outline-variant rounded-xl font-label-md text-on-surface hover:bg-surface-container transition-colors"
           >
             <IconGoogle />

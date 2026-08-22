@@ -10,7 +10,7 @@ import axios from 'axios';
 //
 // Nilai cadangan localhost tetap disediakan supaya aplikasi tidak langsung rusak kalau
 // berkas .env belum dibuat saat pengembangan di komputer sendiri.
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const baseURL = import.meta.env.VITE_API_URL || '"https://jelajahbahari.my.id/api"';
 
 const api = axios.create({ baseURL });
 

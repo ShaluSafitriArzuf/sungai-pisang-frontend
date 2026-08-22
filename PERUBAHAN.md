@@ -10,7 +10,7 @@ Berkas ini dipakai sebagai rujukan saat memperbarui laporan Tugas Akhir.
 ### Perbaikan penting untuk hosting
 
 **`src/api/axios.js`** — alamat backend tidak lagi ditulis tetap sebagai
-`http://localhost:8000/api`. Alamat kini diambil dari `VITE_API_URL` pada berkas `.env`,
+`"https://jelajahbahari.my.id/api"`. Alamat kini diambil dari `VITE_API_URL` pada berkas `.env`,
 karena "localhost" pada aplikasi yang di-hosting menunjuk ke komputer pengunjung sehingga
 seluruh permintaan data akan gagal.
 
