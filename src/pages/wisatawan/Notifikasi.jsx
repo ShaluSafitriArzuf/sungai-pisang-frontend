@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import BottomNav from '../../components/BottomNav';
+import HeaderBersama from '../../components/HeaderBersama';
+import { pakaiTopNav } from '../../utils/menuPeran';
 import { useAuth } from '../../context/AuthContext';
 
 const IKON = {
@@ -9,6 +11,15 @@ const IKON = {
   verifikasi_ditolak: { icon: 'cancel', warna: 'bg-red-100 text-red-600' },
   pembatalan_disetujui: { icon: 'undo', warna: 'bg-blue-100 text-blue-600' },
   pembatalan_ditolak: { icon: 'warning', warna: 'bg-orange-100 text-orange-600' },
+  // Dikirim ke Pengantar Pulau begitu wisatawan mengajukan pembatalan (lihat
+  // ReservasiController@ajukanPembatalan) -- perlu ikon beda dari hasil "disetujui/ditolak"
+  // di atas karena ini menandakan ADA TINDAKAN YANG PERLU DIAMBIL, bukan hasil akhir.
+  pembatalan_diajukan: { icon: 'pending_actions', warna: 'bg-amber-100 text-amber-700' },
+  // Dikirim ke Pengelola Pulau saat Pengantar Pulau MENYETUJUI pembatalan (lihat
+  // ReservasiController@prosesPembatalan). Begitu status jadi 'dibatalkan', reservasinya
+  // langsung keluar dari daftar pengelola -- notifikasi inilah satu-satunya jejak bahwa
+  // unit akomodasi yang sudah disiapkan boleh dilepas kembali.
+  reservasi_dibatalkan: { icon: 'event_busy', warna: 'bg-gray-100 text-gray-600' },
   pengingat: { icon: 'schedule', warna: 'bg-yellow-100 text-yellow-700' },
   reservasi_baru: { icon: 'notifications_active', warna: 'bg-[#004873]/10 text-[#004873]' },
   reservasi_menginap_baru: { icon: 'hotel', warna: 'bg-[#F4A261]/15 text-[#F4A261]' },
@@ -36,8 +47,10 @@ export default function Notifikasi() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // per_page dinaikkan -- sebelumnya notifikasi lama "hilang" begitu totalnya lewat 20,
+    // dan tidak ada cara buka/tandai notifikasi lama itu sama sekali dari UI.
     api
-      .get('/notifikasi')
+      .get('/notifikasi?per_page=500')
       .then((res) => setList(res.data.data || res.data))
       .finally(() => setLoading(false));
   }, []);
@@ -68,41 +81,65 @@ export default function Notifikasi() {
   const isWisatawan = user?.role === 'wisatawan';
   const jumlahBelumDibaca = list.filter((n) => !n.is_read).length;
 
-  return (
-    <div className={`max-w-md mx-auto bg-background min-h-screen ${isWisatawan ? 'pb-20' : 'pb-10'}`}>
-      {/* Header */}
-      <div className="relative bg-[#004873] text-white px-4 pt-5 pb-6 rounded-b-3xl overflow-hidden">
-        <div className="absolute -right-8 -top-10 w-32 h-32 rounded-full bg-white/10" />
-        <div className="absolute -left-10 bottom-0 w-24 h-24 rounded-full bg-[#F4A261]/15" />
+  // Pengantar dan Pengelola Pulau memakai TopNav biru yang sama persis seperti di halaman
+  // Riwayat, Manifest, Laporan, dan Lokasi — lengkap dengan deretan menunya — supaya halaman
+  // Notifikasi tidak lagi terlihat sebagai halaman asing dengan navbar putih gaya wisatawan
+  // di atasnya. Karena TopNav itu sudah memuat judul halaman, kepala biru bawaan halaman ini
+  // (beserta tombol panah kembalinya) tidak dipasang lagi untuk mereka: dua kepala bertumpuk
+  // dengan dua gaya berbeda justru itulah sumber masalahnya. Untuk wisatawan semuanya tetap
+  // persis seperti semula.
+  const headerPeran = pakaiTopNav(user?.role);
 
-        <div className="relative flex items-center gap-3">
-          {!isWisatawan && (
-            <button onClick={() => navigate(-1)} type="button" className="text-white shrink-0">
-              <span className="material-symbols-outlined">arrow_back</span>
-            </button>
-          )}
-          <span className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[20px]">notifications</span>
-          </span>
-          <div className="min-w-0">
-            <p className="font-bold text-lg leading-tight">Notifikasi</p>
-            <p className="text-xs text-white/70">
-              {jumlahBelumDibaca > 0 ? `${jumlahBelumDibaca} belum dibaca` : 'Semua sudah dibaca'}
-            </p>
+  return (
+    <div className={`bg-background min-h-screen ${isWisatawan ? 'pb-20 md:pb-10' : 'pb-10'}`}>
+      <HeaderBersama title="Notifikasi" />
+
+      {/* Kepala halaman versi wisatawan */}
+      {!headerPeran && (
+        <div className="wadah-sedang relative bg-[#004873] text-white px-4 pt-5 pb-6 rounded-b-3xl overflow-hidden">
+          <div className="absolute -right-8 -top-10 w-32 h-32 rounded-full bg-white/10" />
+          <div className="absolute -left-10 bottom-0 w-24 h-24 rounded-full bg-[#F4A261]/15" />
+
+          <div className="relative flex items-center gap-3">
+            <span className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[20px]">notifications</span>
+            </span>
+            <div className="min-w-0">
+              <p className="font-bold text-lg leading-tight">Notifikasi</p>
+              <p className="text-xs text-white/70">
+                {jumlahBelumDibaca > 0 ? `${jumlahBelumDibaca} belum dibaca` : 'Semua sudah dibaca'}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="px-4 py-3.5">
-        {!loading && jumlahBelumDibaca > 0 && (
-          <button
-            onClick={tandaiSemuaDibaca}
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#004873] mb-3 ml-auto"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[16px]">done_all</span>
-            Tandai semua dibaca
-          </button>
+      <div className={`wadah-sedang ${headerPeran ? 'px-4 md:px-6 py-4 md:py-6' : 'px-4 py-3.5'}`}>
+        {/* Baris keterangan + tombol. Jumlah "belum dibaca" ditulis di sini khusus untuk
+            Pengantar/Pengelola Pulau, karena bagi mereka keterangan itu tidak lagi muncul di
+            kepala halaman — TopNav memakai ruang di bawah judul untuk nama pengguna. */}
+        {!loading && (headerPeran || jumlahBelumDibaca > 0) && (
+          <div className="flex items-center justify-between gap-3 mb-3">
+            {headerPeran ? (
+              <p className="text-xs text-on-surface-variant">
+                {jumlahBelumDibaca > 0
+                  ? `${jumlahBelumDibaca} notifikasi belum dibaca`
+                  : 'Semua notifikasi sudah dibaca'}
+              </p>
+            ) : (
+              <span />
+            )}
+            {jumlahBelumDibaca > 0 && (
+              <button
+                onClick={tandaiSemuaDibaca}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[#004873] shrink-0"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-[16px]">done_all</span>
+                Tandai semua dibaca
+              </button>
+            )}
+          </div>
         )}
 
         {loading && (

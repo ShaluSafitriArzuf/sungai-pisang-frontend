@@ -1,15 +1,26 @@
-// Foto sementara (stok Unsplash) dipakai selama Pengelola Pulau belum upload foto asli
-// lewat halaman "Kelola Profil Pulau". Begitu foto_utama terisi di database, foto asli
-// otomatis dipakai — fallback ini cuma jaga-jaga supaya kartu tidak kosong/abu-abu.
+import sirandahImg from '../assets/pulau/sirandah.jpg';
+import ujungKapuriImg from '../assets/pulau/ujung-kapuri.jpg';
+import pagangImg from '../assets/pulau/pagang.jpg';
+import pamutusanImg from '../assets/pulau/pamutusan.jpg';
+
+// Foto lokal (bukan lagi stok online dari Unsplash) dipakai selama Pengelola Pulau belum
+// upload foto asli lewat halaman "Kelola Profil Pulau". Begitu foto_utama terisi di
+// database, foto asli otomatis dipakai — fallback ini cuma jaga-jaga supaya kartu tidak
+// kosong/abu-abu.
+//
+// Pasumpahan & Pagang sudah punya foto_utama asli di database (diupload manual), jadi
+// fallback di bawah ini praktis sudah tidak kepakai untuk keduanya — tapi tetap disiapkan
+// sebagai jaga-jaga kalau suatu saat foto_utama kosong lagi.
 const FALLBACK = {
-  pasumpahan: 'https://images.unsplash.com/photo-1573790387438-4da905039392?w=700&q=80',
-  sirandah: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=700&q=80',
-  'ujung kapuri': 'https://images.unsplash.com/photo-1471922694854-ff1b63b20054?w=700&q=80',
-  pagang: 'https://images.unsplash.com/photo-1546026423-cc4642628d2b?w=700&q=80',
-  pamutusan: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=700&q=80',
+  sirandah: sirandahImg,
+  'ujung kapuri': ujungKapuriImg,
+  pagang: pagangImg,
+  pamutusan: pamutusanImg,
 };
 
-const GENERIC = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=700&q=80';
+// TODO: ganti ke foto Pasumpahan begitu tersedia. Sementara pakai foto Pagang sebagai
+// cadangan umum (generic) kalau nama pulau tidak cocok dengan daftar di atas.
+const GENERIC = pagangImg;
 
 export function fotoPulauFallback(namaPulau = '') {
   const key = Object.keys(FALLBACK).find((k) => namaPulau.toLowerCase().includes(k));

@@ -28,11 +28,17 @@ export default function StatistikUlasan() {
   const [confirmHapusUlasan, setConfirmHapusUlasan] = useState(null);
 
   function muatUlasan() {
-    if (user?.pulau_id) api.get(`/ulasan?pulau_id=${user.pulau_id}`).then((res) => setUlasan(res.data.data || res.data));
+    // per_page dinaikkan -- sama alasannya dengan reservasi: default backend cuma 20/halaman,
+    // jadi ulasan lama "hilang" dari statistik rating begitu pulau ini punya lebih dari 20
+    // ulasan, dan tidak bisa dihapus lagi lewat moderasi karena tidak pernah termuat.
+    if (user?.pulau_id) api.get(`/ulasan?pulau_id=${user.pulau_id}&per_page=500`).then((res) => setUlasan(res.data.data || res.data));
   }
 
   useEffect(() => {
-    api.get('/reservasi').then((res) => setReservasi(res.data.data || res.data));
+    // per_page dinaikkan -- default backend cuma 20/halaman, dan grafik statistik ini butuh
+    // SEMUA reservasi biar angka per bulan-nya tidak diam-diam kepotong begitu jumlah reservasi
+    // pulau ini lewat 20.
+    api.get('/reservasi?per_page=500').then((res) => setReservasi(res.data.data || res.data));
     muatUlasan();
   }, [user]);
 
@@ -77,125 +83,131 @@ export default function StatistikUlasan() {
     }));
 
   return (
-    <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
+    <div className="pb-10 bg-background min-h-screen">
       <TopNav title="Statistik & Ulasan" menu={MENU} />
 
-      <div className="flex gap-2 px-4 py-4">
-        <button
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${tab === 'statistik' ? 'bg-[#004873] text-white' : 'bg-white border border-outline-variant text-on-surface-variant'}`}
-          onClick={() => setTab('statistik')}
-        >
-          Statistik
-        </button>
-        <button
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${tab === 'ulasan' ? 'bg-[#004873] text-white' : 'bg-white border border-outline-variant text-on-surface-variant'}`}
-          onClick={() => setTab('ulasan')}
-        >
-          Ulasan
-        </button>
-      </div>
+      {/* Pembatas lebar isi. TopNav sengaja diletakkan di luar blok ini supaya header
+          birunya membentang penuh selebar layar seperti navbar situs pada umumnya,
+          sementara isi halaman tetap terbaca karena lebarnya dibatasi. */}
+      <div className="wadah-sedang px-0 md:px-6">
 
-      <div className="px-4">
-        {tab === 'statistik' ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="bg-white rounded-xl shadow-sm p-3.5">
-                <span className="w-8 h-8 rounded-full bg-[#004873]/10 text-[#004873] flex items-center justify-center mb-2">
-                  <span className="material-symbols-outlined text-[16px]">hotel</span>
-                </span>
-                <p className="text-[11px] text-on-surface-variant">Menginap (valid)</p>
-                <p className="text-xl font-bold text-on-surface">{totalMenginap}</p>
+        <div className="flex gap-2 px-4 py-4">
+          <button
+            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${tab === 'statistik' ? 'bg-[#004873] text-white' : 'bg-white border border-outline-variant text-on-surface-variant'}`}
+            onClick={() => setTab('statistik')}
+          >
+            Statistik
+          </button>
+          <button
+            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${tab === 'ulasan' ? 'bg-[#004873] text-white' : 'bg-white border border-outline-variant text-on-surface-variant'}`}
+            onClick={() => setTab('ulasan')}
+          >
+            Ulasan
+          </button>
+        </div>
+
+        <div className="px-4">
+          {tab === 'statistik' ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4">
+                <div className="bg-white rounded-xl shadow-sm p-3.5">
+                  <span className="w-8 h-8 rounded-full bg-[#004873]/10 text-[#004873] flex items-center justify-center mb-2">
+                    <span className="material-symbols-outlined text-[16px]">hotel</span>
+                  </span>
+                  <p className="text-[11px] text-on-surface-variant">Menginap (valid)</p>
+                  <p className="text-xl font-bold text-on-surface">{totalMenginap}</p>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm p-3.5">
+                  <span className="w-8 h-8 rounded-full bg-[#F4A261]/15 text-[#F4A261] flex items-center justify-center mb-2">
+                    <span className="material-symbols-outlined text-[16px]">wb_sunny</span>
+                  </span>
+                  <p className="text-[11px] text-on-surface-variant">One Day Trip (valid)</p>
+                  <p className="text-xl font-bold text-on-surface">{totalOneDayTrip}</p>
+                </div>
               </div>
+
               <div className="bg-white rounded-xl shadow-sm p-3.5">
-                <span className="w-8 h-8 rounded-full bg-[#F4A261]/15 text-[#F4A261] flex items-center justify-center mb-2">
-                  <span className="material-symbols-outlined text-[16px]">wb_sunny</span>
-                </span>
-                <p className="text-[11px] text-on-surface-variant">One Day Trip (valid)</p>
-                <p className="text-xl font-bold text-on-surface">{totalOneDayTrip}</p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-3.5">
-              <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-3 px-0.5">
-                Grafik Kunjungan Wisatawan per Bulan
-              </p>
-              {dataGrafik.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-10">Belum ada data kunjungan buat digambar grafiknya.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={dataGrafik} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="bulan" tick={{ fontSize: 10 }} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="Menginap" fill="#004873" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="One Day Trip" fill="#F4A261" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-
-            <div>
-              <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2 px-0.5">Kunjungan per Bulan</p>
-              <div className="space-y-2">
-                {Object.entries(perBulan).sort((a, b) => b[0].localeCompare(a[0])).map(([bulan, jml]) => (
-                  <div key={bulan} className="bg-white rounded-xl shadow-sm p-3.5">
-                    <p className="text-sm font-semibold text-on-surface mb-1.5">{labelBulan(bulan)}</p>
-                    <div className="flex gap-4 text-[11px] text-on-surface-variant">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px]">hotel</span>
-                        {jml.menginap} orang menginap
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px]">wb_sunny</span>
-                        {jml.oneDayTrip} orang one day trip
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {Object.keys(perBulan).length === 0 && (
-                  <p className="text-gray-400 text-sm text-center py-6">Belum ada data kunjungan.</p>
+                <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-3 px-0.5">
+                  Grafik Kunjungan Wisatawan per Bulan
+                </p>
+                {dataGrafik.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-10">Belum ada data kunjungan buat digambar grafiknya.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={dataGrafik} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="bulan" tick={{ fontSize: 10 }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Bar dataKey="Menginap" fill="#004873" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="One Day Trip" fill="#F4A261" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 )}
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <p className="text-xs text-on-surface-variant">Rating Rata-rata</p>
-              <p className="text-2xl font-bold text-on-surface">★ {rataRata}</p>
-            </div>
-            {ulasan.map((u) => (
-              <div key={u.id} className="bg-white rounded-xl shadow-sm p-3.5 text-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-on-surface">
-                    {u.wisatawan?.name} <span className="text-yellow-500">{'★'.repeat(u.rating)}</span>
-                  </p>
-                  <button
-                    onClick={() => hapusUlasan(u)}
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600 whitespace-nowrap shrink-0"
-                  >
-                    Hapus
-                  </button>
-                </div>
-                <p className="text-on-surface-variant mt-0.5">{u.komentar}</p>
-              </div>
-            ))}
-            {ulasan.length === 0 && <p className="text-gray-400 text-sm text-center py-6">Belum ada ulasan.</p>}
-          </div>
-        )}
-      </div>
 
-      <ConfirmModal
-        open={!!confirmHapusUlasan}
-        title="Hapus Ulasan"
-        message={confirmHapusUlasan ? `Hapus ulasan dari "${confirmHapusUlasan.wisatawan?.name}"? Tindakan ini tidak bisa dibatalkan.` : ''}
-        danger
-        confirmText="Hapus"
-        onConfirm={konfirmasiHapusUlasan}
-        onCancel={() => setConfirmHapusUlasan(null)}
-      />
+              <div>
+                <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2 px-0.5">Kunjungan per Bulan</p>
+                <div className="space-y-2">
+                  {Object.entries(perBulan).sort((a, b) => b[0].localeCompare(a[0])).map(([bulan, jml]) => (
+                    <div key={bulan} className="bg-white rounded-xl shadow-sm p-3.5">
+                      <p className="text-sm font-semibold text-on-surface mb-1.5">{labelBulan(bulan)}</p>
+                      <div className="flex gap-4 text-[11px] text-on-surface-variant">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">hotel</span>
+                          {jml.menginap} orang menginap
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">wb_sunny</span>
+                          {jml.oneDayTrip} orang one day trip
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {Object.keys(perBulan).length === 0 && (
+                    <p className="text-gray-400 text-sm text-center py-6">Belum ada data kunjungan.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2.5 md:space-y-0 md:grid md:grid-cols-2 md:gap-3">
+              <div className="bg-white rounded-xl shadow-sm p-4">
+                <p className="text-xs text-on-surface-variant">Rating Rata-rata</p>
+                <p className="text-2xl font-bold text-on-surface">★ {rataRata}</p>
+              </div>
+              {ulasan.map((u) => (
+                <div key={u.id} className="bg-white rounded-xl shadow-sm p-3.5 text-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-on-surface">
+                      {u.wisatawan?.name} <span className="text-yellow-500">{'★'.repeat(u.rating)}</span>
+                    </p>
+                    <button
+                      onClick={() => hapusUlasan(u)}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600 whitespace-nowrap shrink-0"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                  <p className="text-on-surface-variant mt-0.5">{u.komentar}</p>
+                </div>
+              ))}
+              {ulasan.length === 0 && <p className="text-gray-400 text-sm text-center py-6">Belum ada ulasan.</p>}
+            </div>
+          )}
+        </div>
+
+        <ConfirmModal
+          open={!!confirmHapusUlasan}
+          title="Hapus Ulasan"
+          message={confirmHapusUlasan ? `Hapus ulasan dari "${confirmHapusUlasan.wisatawan?.name}"? Tindakan ini tidak bisa dibatalkan.` : ''}
+          danger
+          confirmText="Hapus"
+          onConfirm={konfirmasiHapusUlasan}
+          onCancel={() => setConfirmHapusUlasan(null)}
+        />
+      </div>
     </div>
   );
 }

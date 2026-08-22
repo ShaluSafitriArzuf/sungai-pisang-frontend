@@ -95,6 +95,10 @@ export default function KelolaProfilPulau() {
       formData.append('harga_tiket_masuk_menginap', form.harga_tiket_masuk_menginap || '');
       formData.append('harga_penyeberangan', form.harga_penyeberangan || '');
       formData.append('jam_operasional_genset', form.jam_operasional_genset || '');
+      // Boolean JS jadi string "true"/"false" kalau di-append apa adanya ke FormData, dan itu
+      // ditolak validator 'boolean' Laravel (cuma nerima 1/0/'1'/'0'/true/false asli) -- sama
+      // persis kasus tiket_termasuk di Kelola Akomodasi kemarin, jadi dikirim sebagai '1'/'0'.
+      formData.append('genset_24_jam', form.genset_24_jam ? '1' : '0');
       formData.append('regulasi', form.regulasi || '');
       (form.fasilitas || []).forEach((f) => formData.append('fasilitas[]', f));
       if (fotoFile) formData.append('foto_utama', fotoFile);
@@ -114,10 +118,10 @@ export default function KelolaProfilPulau() {
   }
 
   return (
-    <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
+    <div className="pb-10 bg-background min-h-screen">
       <TopNav title="Kelola Profil Pulau (CMS)" menu={MENU} />
 
-      <div className="px-4 py-4">
+      <div className="wadah-sedang px-4 md:px-6 py-4 md:py-8">
         <p className="font-bold text-lg text-on-surface mb-0.5">{form.nama}</p>
         <p className="text-xs text-on-surface-variant mb-4">
           Data di bawah ini yang tampil ke wisatawan di halaman Detail Pulau &amp; Beranda.
@@ -211,13 +215,37 @@ export default function KelolaProfilPulau() {
             />
           </Field>
 
-          <Field label="Jam Operasional Genset" icon="bolt">
-            <input
-              className={inputCls}
-              placeholder="mis. 18.00 - 06.00 WIB"
-              value={form.jam_operasional_genset || ''}
-              onChange={(e) => setForm({ ...form, jam_operasional_genset: e.target.value })}
-            />
+          <Field label="Status Genset" icon="bolt">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, genset_24_jam: true })}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${form.genset_24_jam ? 'bg-[#004873] text-white' : 'bg-white border border-outline-variant text-on-surface-variant'}`}
+              >
+                24 Jam
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, genset_24_jam: false })}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${!form.genset_24_jam ? 'bg-[#F4A261] text-white' : 'bg-white border border-outline-variant text-on-surface-variant'}`}
+              >
+                Terjadwal
+              </button>
+            </div>
+
+            {/* Jam manual cuma relevan kalau statusnya "Terjadwal" -- kalau 24 Jam, kolom
+                ini disembunyikan biar ga ada data jadwal nyisa yang membingungkan. */}
+            {!form.genset_24_jam && (
+              <input
+                className={`${inputCls} mt-2.5`}
+                placeholder="mis. 18.00 - 06.00 WIB (hanya menyala kalau ramai)"
+                value={form.jam_operasional_genset || ''}
+                onChange={(e) => setForm({ ...form, jam_operasional_genset: e.target.value })}
+              />
+            )}
+            <p className="text-[10px] text-on-surface-variant mt-1">
+              Pilih "24 Jam" kalau genset menyala terus, atau "Terjadwal" kalau cuma dinyalakan pada jam tertentu (mis. saat kunjungan sedang ramai).
+            </p>
           </Field>
 
           <Field label="Fasilitas Pulau" icon="checklist">

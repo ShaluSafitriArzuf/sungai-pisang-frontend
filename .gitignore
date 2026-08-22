@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Berkas lama yang menunggu dihapus manual
+_to_delete/

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import NavbarDesktop from './components/NavbarDesktop';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -26,6 +27,7 @@ import DetailVerifikasi from './pages/pengantar_pulau/DetailVerifikasi';
 import ManifestPage from './pages/pengantar_pulau/Manifest';
 import PengaturanLokasi from './pages/pengantar_pulau/PengaturanLokasi';
 import RiwayatPengantar from './pages/pengantar_pulau/Riwayat';
+import LaporanPemasukan from './pages/pengantar_pulau/LaporanPemasukan';
 
 import DashboardPengelola from './pages/pengelola_pulau/Dashboard';
 import DetailReservasiPengelola from './pages/pengelola_pulau/DetailReservasi';
@@ -70,7 +72,15 @@ function AnyRole(Component) {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      {/* Navbar mendatar khusus layar lebar. Dirender di sini (bukan di tiap halaman) supaya
+          semua halaman Wisatawan dan halaman publik otomatis punya menu atas saat dibuka di
+          laptop. Komponennya sendiri yang memutuskan kapan tidak usah tampil — misalnya di
+          halaman Login/Register, dan di halaman Pengantar/Pengelola Pulau yang sudah punya
+          TopNav biru sendiri. Di layar HP komponen ini tidak pernah muncul (hidden md:block). */}
+      <NavbarDesktop />
+
+      <Routes>
       <Route path="/" element={<Navigate to="/beranda" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -91,8 +101,13 @@ export default function App() {
       <Route path="/reservasi/:id/batal" element={W(FormPembatalan)} />
       <Route path="/notifikasi" element={AnyRole(Notifikasi)} />
       <Route path="/profil" element={W(Profil)} />
-      <Route path="/profil/edit" element={W(EditProfil)} />
-      <Route path="/profil/password" element={W(GantiPassword)} />
+      {/* Edit Profil & Ganti Password dibuka buat 3 role (bukan cuma wisatawan) -- endpoint
+          backend-nya (PUT /user, PUT /user/password) sudah generic untuk semua role, cuma
+          sebelumnya belum ada jalan masuk di frontend buat Pengelola/Pengantar Pulau. Berguna
+          terutama kalau akun pulau/pengantar pindah tangan ke orang lain, tinggal ganti
+          password sendiri tanpa perlu reset manual lewat database. */}
+      <Route path="/profil/edit" element={AnyRole(EditProfil)} />
+      <Route path="/profil/password" element={AnyRole(GantiPassword)} />
       <Route path="/ulasan/:reservasiId" element={W(FormUlasan)} />
 
       {/* ── Pengantar Pulau (4 halaman) ── */}
@@ -100,6 +115,7 @@ export default function App() {
       <Route path="/pengantar/reservasi/:id" element={PP(DetailVerifikasi)} />
       <Route path="/pengantar/manifest" element={PP(ManifestPage)} />
       <Route path="/pengantar/riwayat" element={PP(RiwayatPengantar)} />
+      <Route path="/pengantar/laporan" element={PP(LaporanPemasukan)} />
       <Route path="/pengantar/lokasi" element={PP(PengaturanLokasi)} />
 
       {/* ── Pengelola Pulau (6 halaman) ── */}
@@ -112,6 +128,7 @@ export default function App() {
       <Route path="/pengelola/statistik" element={PG(StatistikUlasan)} />
 
       <Route path="*" element={<Navigate to="/beranda" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }

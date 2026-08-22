@@ -22,6 +22,10 @@ export default function DetailVerifikasi() {
   const [statusRefund, setStatusRefund] = useState('disetujui');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Bukti transfer umumnya foto/struk berorientasi potret. Kalau ditampilkan selebar kartu,
+  // tingginya bisa memakan hampir satu layar penuh dan tombol Valid/Tolak jadi jauh ke bawah.
+  // Jadi defaultnya ditampilkan sedang saja, dan bisa diperbesar kalau perlu diperiksa detail.
+  const [buktiDiperbesar, setBuktiDiperbesar] = useState(false);
 
   useEffect(() => {
     api.get(`/reservasi/${id}`).then((res) => setR(res.data));
@@ -38,6 +42,18 @@ export default function DetailVerifikasi() {
     setLoading(true);
     try {
       await api.patch(`/reservasi/${id}/verifikasi`, { status, catatan_penolakan: catatan });
+      // Sebelumnya langsung navigate() tanpa pesan apa pun. Karena reservasi yang sudah
+      // diproses otomatis keluar dari Dashboard (dashboard hanya menampilkan yang menunggu
+      // verifikasi), Pengantar Pulau seolah dilempar ke halaman kosong dan tidak yakin
+      // aksinya berhasil. Toast ini bertahan melewati perpindahan halaman karena
+      // ToastProvider dipasang di root (lihat main.jsx).
+      showToast(
+        status === 'valid'
+          ? 'Reservasi ditandai valid. Notifikasi terkirim ke wisatawan dan pengelola pulau.'
+          : 'Reservasi ditolak. Wisatawan dapat mengunggah ulang bukti transfer.',
+        3200,
+        'sukses',
+      );
       navigate('/pengantar/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal memperbarui status reservasi. Coba lagi.');
@@ -54,6 +70,17 @@ export default function DetailVerifikasi() {
         disetujui,
         status_pengembalian_dana: disetujui ? statusRefund : null,
       });
+      // Sama alasannya dengan verifikasi() di atas. Khusus penolakan pembatalan, pesannya
+      // sengaja menyebut "kembali berstatus valid" -- karena reservasinya balik ke daftar
+      // valid dan TIDAK muncul di Dashboard, tanpa pesan ini layarnya terlihat seperti
+      // tidak terjadi apa-apa.
+      showToast(
+        disetujui
+          ? 'Pembatalan disetujui. Notifikasi terkirim ke wisatawan dan pengelola pulau.'
+          : 'Pengajuan pembatalan ditolak. Reservasi kembali berstatus valid.',
+        3200,
+        'sukses',
+      );
       navigate('/pengantar/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal memproses pembatalan. Coba lagi.');
@@ -63,8 +90,13 @@ export default function DetailVerifikasi() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-4 pb-10">
-      <p className="font-bold text-lg text-laut-dark mb-4">Detail Reservasi</p>
+    <div className="wadah-sempit px-4 md:px-6 pt-4 md:pt-8 pb-10">
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => navigate(-1)} type="button" className="text-laut-dark">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <p className="font-bold text-lg text-laut-dark">Detail Reservasi</p>
+      </div>
 
       <div className="card mb-4 text-sm space-y-1">
         <div className="flex justify-between"><span>Wisatawan</span><span className="font-semibold">{r.wisatawan?.name}</span></div>
@@ -102,8 +134,55 @@ export default function DetailVerifikasi() {
 
       {r.bukti_transfer && (
         <div className="card mb-4">
-          <p className="text-sm font-semibold mb-2">Bukti Transfer</p>
-          <img src={r.bukti_transfer} alt="bukti transfer" className="w-full rounded-lg" />
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold">Bukti Transfer</p>
+            <button
+              type="button"
+              onClick={() => setBuktiDiperbesar(true)}
+              className="flex items-center gap-1 text-xs font-semibold text-[#004873]"
+            >
+              <span className="material-symbols-outlined text-[15px]">zoom_in</span>
+              Perbesar
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBuktiDiperbesar(true)}
+            className="block w-full bg-surface-container rounded-lg overflow-hidden"
+          >
+            <img
+              src={r.bukti_transfer}
+              alt="bukti transfer"
+              className="mx-auto max-h-56 w-auto object-contain"
+            />
+          </button>
+          <p className="text-[11px] text-on-surface-variant mt-1.5 text-center">
+            Ketuk gambar untuk memeriksa lebih jelas
+          </p>
+        </div>
+      )}
+
+      {/* Tampilan layar penuh -- dipakai saat Pengantar Pulau perlu memastikan nominal dan
+          nomor rekening pada struk benar-benar terbaca sebelum menandai valid/tolak. */}
+      {buktiDiperbesar && r.bukti_transfer && (
+        <div
+          onClick={() => setBuktiDiperbesar(false)}
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setBuktiDiperbesar(false)}
+            className="absolute top-4 right-4 text-white"
+            aria-label="Tutup"
+          >
+            <span className="material-symbols-outlined text-[30px]">close</span>
+          </button>
+          <img
+            src={r.bukti_transfer}
+            alt="bukti transfer diperbesar"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-full max-w-full object-contain rounded-lg"
+          />
         </div>
       )}
 

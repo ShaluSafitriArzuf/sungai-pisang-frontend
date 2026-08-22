@@ -93,7 +93,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start pb-10 bg-surface-container">
       {/* Header foto — ganti url ini dengan foto asli Pulau Sungai Pisang kalau sudah ada */}
-      <header className="relative w-full h-[320px] header-curved sea-mist-shadow">
+      <header className="relative w-full h-[320px] md:h-[440px] header-curved sea-mist-shadow">
         <div
           className="absolute inset-0 z-0 bg-cover bg-center"
           style={{
@@ -104,7 +104,7 @@ export default function Login() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/10 z-10" />
 
         <div className="relative z-20 flex flex-col items-center justify-center h-full pt-8">
-          <h1 className="font-display-lg-mobile text-display-lg-mobile text-white tracking-tight drop-shadow-md">
+          <h1 className="font-display-lg-mobile text-display-lg-mobile md:text-5xl md:font-bold text-white tracking-tight drop-shadow-md">
             Jelajah Bahari
           </h1>
           <p className="font-label-md text-label-md text-white/90 tracking-widest mt-1 uppercase">
@@ -113,8 +113,8 @@ export default function Login() {
         </div>
       </header>
 
-      <main className="w-full max-w-md px-container-margin -mt-10 relative z-30">
-        <div className="bg-white rounded-2xl p-8 shadow-xl shadow-black/10 relative">
+      <main className="w-full max-w-md md:max-w-lg px-container-margin -mt-10 md:-mt-40 mb-0 md:mb-16 relative z-30">
+        <div className="bg-white rounded-2xl p-8 md:p-10 shadow-xl shadow-black/10 relative">
           <div className="mb-8">
             <h2 className="font-headline-md text-headline-md text-on-surface">Selamat Datang</h2>
             <p className="font-body-md text-body-md text-on-surface-variant mt-1">

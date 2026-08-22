@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import HeaderBersama from '../../components/HeaderBersama';
+import { pakaiTopNav } from '../../utils/menuPeran';
+import { useAuth } from '../../context/AuthContext';
 
 function FieldPassword({ label, value, onChange, error }) {
   const [lihat, setLihat] = useState(false);
@@ -29,6 +32,7 @@ function FieldPassword({ label, value, onChange, error }) {
 
 export default function GantiPassword() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState({ password_lama: '', password_baru: '', password_baru_confirmation: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -49,7 +53,9 @@ export default function GantiPassword() {
       await api.put('/user/password', form);
       setSukses(true);
       setForm({ password_lama: '', password_baru: '', password_baru_confirmation: '' });
-      setTimeout(() => navigate('/profil'), 900);
+      // navigate(-1), bukan '/profil' yang di-hardcode -- halaman ini sekarang juga dibuka
+      // buat Pengelola/Pengantar Pulau yang tidak punya halaman '/profil' (khusus wisatawan).
+      setTimeout(() => navigate(-1), 900);
     } catch (err) {
       setErrors(err.response?.data?.errors || { umum: [err.response?.data?.message || 'Gagal mengganti password.'] });
     } finally {
@@ -57,17 +63,26 @@ export default function GantiPassword() {
     }
   }
 
-  return (
-    <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
-        <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <p className="font-bold text-on-surface">Ganti Password</p>
-      </div>
+  // Pengantar/Pengelola Pulau memakai TopNav biru berikut deretan menunya, sama seperti di
+  // seluruh halaman kerja mereka. Wisatawan tetap memakai bilah judul putih dengan tombol
+  // kembali seperti semula — bagi mereka halaman ini dibuka dari hub Profil, jadi tombol
+  // kembali memang jalan pulangnya.
+  const headerPeran = pakaiTopNav(user?.role);
 
-      <div className="px-4 pt-5">
+  return (
+    <div className="pb-10 bg-background min-h-screen">
+      <HeaderBersama title="Ganti Password" />
+
+      {!headerPeran && (
+        <div className="wadah-sempit flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
+          <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <p className="font-bold text-on-surface">Ganti Password</p>
+        </div>
+      )}
+
+      <div className="wadah-sempit px-4 pt-5">
         {sukses && (
           <div className="bg-green-50 text-green-700 text-xs font-semibold rounded-xl px-4 py-3 mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>

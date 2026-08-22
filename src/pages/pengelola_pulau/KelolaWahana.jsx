@@ -138,10 +138,10 @@ export default function KelolaWahana() {
   }
 
   return (
-    <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
+    <div className="pb-10 bg-background min-h-screen">
       <TopNav title="Kelola Wahana & Kegiatan" menu={MENU} />
 
-      <div className="px-4 py-4">
+      <div className="wadah-lebar px-4 md:px-6 py-4 md:py-8">
         <button
           className="w-full bg-[#004873] text-white font-semibold py-3 rounded-xl mb-4 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
           onClick={toggleForm}
@@ -214,7 +214,7 @@ export default function KelolaWahana() {
           </div>
         )}
 
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-3">
           {list.map((w) => {
             const { icon, warna } = ikonWahana(w.nama);
             return (

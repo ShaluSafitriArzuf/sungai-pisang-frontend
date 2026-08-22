@@ -8,13 +8,21 @@ const MENU = [
   { to: '/pengantar/dashboard', label: 'Dashboard' },
   { to: '/pengantar/manifest', label: 'Manifest' },
   { to: '/pengantar/riwayat', label: 'Riwayat' },
+  { to: '/pengantar/laporan', label: 'Laporan' },
   { to: '/pengantar/lokasi', label: 'Lokasi' },
 ];
 
+// Sistem punya enam status reservasi, tapi daftar ini dulu cuma memuat dua di antaranya.
+// Akibatnya reservasi berstatus Pengajuan Batal, Dibatalkan, dan Selesai tetap ikut terlihat
+// di tab "Semua" namun tidak bisa disaring sama sekali -- pada data nyata, 20 dari 34 baris
+// tidak punya tabnya. Ketiganya ditambahkan supaya seluruh status bisa ditelusuri.
 const TABS = [
   { key: '', label: 'Semua' },
+  { key: 'pengajuan_batal', label: 'Pengajuan Batal' },
   { key: 'valid', label: 'Valid' },
   { key: 'ditolak', label: 'Ditolak' },
+  { key: 'dibatalkan', label: 'Dibatalkan' },
+  { key: 'selesai', label: 'Selesai' },
 ];
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -31,8 +39,9 @@ export default function Riwayat() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // per_page dinaikkan biar riwayat lama tidak diam-diam kepotong begitu totalnya lewat 20.
     api
-      .get('/reservasi')
+      .get('/reservasi?per_page=500')
       .then((res) => setList(res.data.data || res.data))
       .finally(() => setLoading(false));
   }, []);
@@ -42,16 +51,16 @@ export default function Riwayat() {
   const filtered = tab ? sudahDiproses.filter((r) => r.status === tab) : sudahDiproses;
 
   return (
-    <div className="max-w-md mx-auto pb-10">
+    <div className="pb-10 bg-background min-h-screen">
       <TopNav title="Riwayat Verifikasi" menu={MENU} />
 
-      <div className="px-4 py-4">
+      <div className="wadah-sedang px-4 md:px-6 py-4 md:py-8">
         <p className="text-xs text-gray-500 mb-3">
           Semua reservasi dari seluruh pulau yang pernah kamu verifikasi. Ini beda dari Manifest —
           Manifest cuma nampilin kunjungan valid di tanggal tertentu, ini nampilin semuanya.
         </p>
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 overflow-x-auto md:overflow-visible md:flex-wrap no-scrollbar">
           {TABS.map((t) => {
             const jumlah = t.key ? sudahDiproses.filter((r) => r.status === t.key).length : sudahDiproses.length;
             const aktifTab = tab === t.key;
@@ -59,7 +68,7 @@ export default function Riwayat() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap shadow-sm transition-colors ${
+                className={`text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap shrink-0 shadow-sm transition-colors ${
                   aktifTab ? 'bg-[#004873] text-white' : 'bg-white text-on-surface-variant border border-outline-variant'
                 }`}
               >
@@ -73,7 +82,7 @@ export default function Riwayat() {
         {loading && <p className="text-center text-sm text-on-surface-variant mt-6">Memuat riwayat...</p>}
 
         {!loading && (
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 md:space-y-0 md:grid md:grid-cols-2 md:gap-3">
             {filtered.map((r) => (
               <Link
                 to={`/pengantar/reservasi/${r.id}`}

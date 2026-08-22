@@ -23,9 +23,9 @@ export default function Profil() {
   const menuItems = user?.google_id ? MENU_DASAR : [...MENU_DASAR, MENU_PASSWORD];
 
   return (
-    <div className="max-w-md mx-auto pb-20 bg-background min-h-screen">
+    <div className="wadah-sedang pb-20 md:pb-10 bg-background min-h-screen">
       {/* Header profil */}
-      <div className="relative bg-[#004873] text-white px-4 pt-8 pb-10 flex flex-col items-center rounded-b-[32px] overflow-hidden">
+      <div className="relative bg-[#004873] text-white px-4 pt-8 md:pt-12 pb-10 md:pb-14 flex flex-col items-center rounded-b-[32px] overflow-hidden">
         <div className="absolute -right-8 -top-10 w-36 h-36 rounded-full bg-white/10" />
         <div className="absolute -left-10 bottom-0 w-28 h-28 rounded-full bg-[#F4A261]/15" />
 
@@ -40,7 +40,9 @@ export default function Profil() {
       </div>
 
       {/* Menu */}
-      <div className="px-4 -mt-5 relative space-y-2.5">
+      {/* md:grid-cols-2 -- daftar menu setinggi satu layar penuh hanya masuk akal di HP. Di
+          laptop ruang mendatarnya terbuang percuma kalau tetap satu kolom. */}
+      <div className="px-4 md:px-6 -mt-5 relative space-y-2.5 md:space-y-0 md:grid md:grid-cols-2 md:gap-3">
         {menuItems.map((item) => (
           <Link
             key={item.to}
@@ -59,7 +61,7 @@ export default function Profil() {
         ))}
 
         {user?.google_id && (
-          <p className="text-center text-[11px] text-on-surface-variant px-2">
+          <p className="md:col-span-2 text-center text-[11px] text-on-surface-variant px-2">
             Akun ini masuk lewat Google, jadi tidak ada password untuk diganti di sini.
           </p>
         )}
@@ -77,7 +79,7 @@ export default function Profil() {
           </div>
         </button>
 
-        <p className="text-center text-[10px] text-outline pt-4">Jelajah Bahari Sungai Pisang</p>
+        <p className="md:col-span-2 text-center text-[10px] text-outline pt-4">Jelajah Bahari Sungai Pisang</p>
       </div>
 
       <BottomNav />

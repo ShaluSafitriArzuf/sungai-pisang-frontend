@@ -17,8 +17,10 @@ export function useJumlahNotifBelumDibaca() {
     if (!localStorage.getItem('token')) return;
 
     let batal = false;
+    // per_page dinaikkan -- sama alasannya dengan halaman Notifikasi: kalau cuma baca halaman
+    // pertama (20), badge ini bisa UNDERCOUNT begitu notifikasi belum-dibaca lebih dari 20.
     api
-      .get('/notifikasi')
+      .get('/notifikasi?per_page=500')
       .then((res) => {
         if (batal) return;
         const list = res.data.data || res.data;

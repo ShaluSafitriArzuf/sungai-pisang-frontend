@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import HeaderBersama from '../../components/HeaderBersama';
+import { pakaiTopNav } from '../../utils/menuPeran';
 import { useAuth } from '../../context/AuthContext';
 
 export default function EditProfil() {
@@ -24,7 +26,10 @@ export default function EditProfil() {
       const res = await api.put('/user', form);
       updateUser(res.data.user);
       setSukses(true);
-      setTimeout(() => navigate('/profil'), 900);
+      // navigate(-1) dipakai (bukan '/profil' yang di-hardcode) karena halaman ini sekarang
+      // juga dibuka buat Pengelola/Pengantar Pulau, dan mereka tidak punya halaman '/profil'
+      // (itu hub khusus wisatawan) -- balik ke halaman asal jauh lebih aman untuk semua role.
+      setTimeout(() => navigate(-1), 900);
     } catch (err) {
       setErrors(err.response?.data?.errors || { umum: [err.response?.data?.message || 'Gagal menyimpan perubahan.'] });
     } finally {
@@ -32,17 +37,26 @@ export default function EditProfil() {
     }
   }
 
-  return (
-    <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
-        <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <p className="font-bold text-on-surface">Edit Profil</p>
-      </div>
+  // Pengantar/Pengelola Pulau memakai TopNav biru berikut deretan menunya, sama seperti di
+  // seluruh halaman kerja mereka. Wisatawan tetap memakai bilah judul putih dengan tombol
+  // kembali seperti semula — bagi mereka halaman ini dibuka dari hub Profil, jadi tombol
+  // kembali memang jalan pulangnya.
+  const headerPeran = pakaiTopNav(user?.role);
 
-      <div className="px-4 pt-5">
+  return (
+    <div className="pb-10 bg-background min-h-screen">
+      <HeaderBersama title="Edit Profil" />
+
+      {!headerPeran && (
+        <div className="wadah-sempit flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
+          <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <p className="font-bold text-on-surface">Edit Profil</p>
+        </div>
+      )}
+
+      <div className="wadah-sempit px-4 pt-5">
         {sukses && (
           <div className="bg-green-50 text-green-700 text-xs font-semibold rounded-xl px-4 py-3 mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
@@ -94,6 +108,19 @@ export default function EditProfil() {
         >
           {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
         </button>
+
+        {/* Akun Google passwordnya diisi string acak otomatis (lihat GoogleAuthController),
+            jadi tidak ada password asli buat diganti -- sama seperti aturan di Profil.jsx. */}
+        {!user?.google_id && (
+          <button
+            type="button"
+            onClick={() => navigate('/profil/password')}
+            className="w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-[#004873] py-3 mt-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">lock</span>
+            Ganti Password
+          </button>
+        )}
       </div>
     </div>
   );

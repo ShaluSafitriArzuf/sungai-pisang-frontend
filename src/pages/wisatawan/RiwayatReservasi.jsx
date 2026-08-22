@@ -5,11 +5,19 @@ import StatusBadge from '../../components/StatusBadge';
 import BottomNav from '../../components/BottomNav';
 import { fotoPulauFallback } from '../../utils/fotoPulau';
 
+// Dua status tidak punya tabnya: Pengajuan Batal dan Dibatalkan. Keduanya tetap ikut
+// terlihat di tab "Semua" tapi tidak bisa disaring -- pada data nyata, jumlah di tab Semua
+// (22) tidak sama dengan jumlah seluruh tab lain digabung (4+8+0+5=17), lima sisanya persis
+// reservasi yang sedang atau sudah dibatalkan. Padahal justru itu yang paling dicari
+// wisatawan: memastikan pengajuan pembatalannya sudah diproses atau belum.
+// Sama seperti perbaikan di Riwayat Verifikasi milik Pengantar Pulau.
 const TABS = [
   { key: '', label: 'Semua' },
   { key: 'menunggu_verifikasi', label: 'Menunggu' },
   { key: 'valid', label: 'Valid' },
+  { key: 'pengajuan_batal', label: 'Pengajuan Batal' },
   { key: 'ditolak', label: 'Ditolak' },
+  { key: 'dibatalkan', label: 'Dibatalkan' },
   { key: 'selesai', label: 'Selesai' },
 ];
 
@@ -82,8 +90,10 @@ export default function RiwayatReservasi() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // per_page dinaikkan biar riwayat reservasi lama milik wisatawan ini tidak diam-diam
+    // kepotong begitu totalnya lewat 20.
     api
-      .get('/reservasi')
+      .get('/reservasi?per_page=500')
       .then((res) => setList(res.data.data || res.data))
       .finally(() => setLoading(false));
   }, []);
@@ -94,9 +104,9 @@ export default function RiwayatReservasi() {
   const menungguCount = list.filter((r) => r.status === 'menunggu_verifikasi').length;
 
   return (
-    <div className="max-w-md mx-auto pb-20 bg-background min-h-screen">
+    <div className="wadah-sedang pb-20 md:pb-10 bg-background min-h-screen">
       {/* Header */}
-      <div className="relative bg-[#004873] text-white px-4 pt-5 pb-7 rounded-b-3xl overflow-hidden">
+      <div className="relative bg-[#004873] text-white px-4 md:px-6 pt-5 md:pt-8 pb-7 md:pb-10 rounded-b-3xl overflow-hidden">
         <div className="absolute -right-8 -top-10 w-32 h-32 rounded-full bg-white/10" />
         <div className="absolute -left-10 bottom-0 w-24 h-24 rounded-full bg-[#F4A261]/15" />
 
@@ -105,7 +115,7 @@ export default function RiwayatReservasi() {
             <span className="material-symbols-outlined text-[20px]">confirmation_number</span>
           </span>
           <div>
-            <p className="font-bold text-lg leading-tight">Riwayat Reservasi</p>
+            <p className="font-bold text-lg md:text-2xl leading-tight">Riwayat Reservasi</p>
             <p className="text-xs text-white/70">{list.length} reservasi tercatat</p>
           </div>
         </div>
@@ -121,7 +131,7 @@ export default function RiwayatReservasi() {
       </div>
 
       {/* Tabs filter */}
-      <div className="flex gap-2 px-4 py-3.5 overflow-x-auto -mt-2">
+      <div className="flex gap-2 px-4 md:px-6 py-3.5 md:py-5 overflow-x-auto md:overflow-visible md:flex-wrap -mt-2">
         {TABS.map((t) => {
           const jumlah = t.key ? list.filter((r) => r.status === t.key).length : list.length;
           const aktifTab = tab === t.key;
@@ -129,7 +139,7 @@ export default function RiwayatReservasi() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap shadow-sm transition-colors ${
+              className={`text-xs font-semibold px-3.5 py-2 rounded-full whitespace-nowrap shrink-0 shadow-sm transition-colors ${
                 aktifTab ? 'bg-[#004873] text-white' : 'bg-white text-on-surface-variant border border-outline-variant'
               }`}
             >
@@ -141,7 +151,7 @@ export default function RiwayatReservasi() {
       </div>
 
       {/* Daftar reservasi */}
-      <div className="px-4">
+      <div className="px-4 md:px-6">
         {loading && (
           <p className="text-center text-sm text-on-surface-variant mt-6">Memuat riwayat reservasi...</p>
         )}
@@ -151,7 +161,9 @@ export default function RiwayatReservasi() {
             <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2 px-0.5">
               Perlu Perhatian / Aktif
             </p>
-            <div className="space-y-2.5">
+            {/* md:grid-cols-2 -- di HP kartu ditumpuk ke bawah; di laptop dua kolom supaya
+                daftar panjang tidak memaksa scroll berkepanjangan di layar lebar. */}
+            <div className="space-y-2.5 md:space-y-0 md:grid md:grid-cols-2 md:gap-3">
               {aktif.map((r) => <KartuReservasi key={r.id} r={r} />)}
             </div>
           </div>
@@ -160,7 +172,7 @@ export default function RiwayatReservasi() {
         {!loading && riwayat.length > 0 && (
           <div className="mb-4">
             <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2 px-0.5">Riwayat</p>
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 md:space-y-0 md:grid md:grid-cols-2 md:gap-3">
               {riwayat.map((r) => <KartuReservasi key={r.id} r={r} />)}
             </div>
           </div>

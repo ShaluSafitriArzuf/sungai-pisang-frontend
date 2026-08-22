@@ -47,7 +47,7 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-surface-container px-6">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-6">
+      <div className="w-full max-w-sm md:max-w-md bg-white rounded-2xl shadow-md p-6 md:p-8">
         <p className="text-xl font-bold text-on-surface mb-1">Reset Password</p>
         <p className="text-sm text-on-surface-variant mb-5">
           Buat password baru untuk <span className="font-semibold">{email || 'akunmu'}</span>.

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../../api/axios';
@@ -10,6 +11,7 @@ const MENU = [
   { to: '/pengantar/dashboard', label: 'Dashboard' },
   { to: '/pengantar/manifest', label: 'Manifest' },
   { to: '/pengantar/riwayat', label: 'Riwayat' },
+  { to: '/pengantar/laporan', label: 'Laporan' },
   { to: '/pengantar/lokasi', label: 'Lokasi' },
 ];
 
@@ -34,6 +36,7 @@ function SimpanPeta({ petaRef }) {
 export default function PengaturanLokasi() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const petaRef = useRef(null);
   const [position, setPosition] = useState([
     user?.latitude ? Number(user.latitude) : -1.078,
@@ -107,23 +110,46 @@ export default function PengaturanLokasi() {
 
       await api.post('/peta/lokasi-saya', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       showToast('Lokasi berhasil disimpan.', 2000, 'sukses');
+
+      // Sebelumnya halaman ini diam di tempat setelah menyimpan. Pesan "berhasil" muncul
+      // sebentar lalu hilang, dan yang tersisa di layar tetap formulir yang sama persis --
+      // tidak ada tanda apakah pekerjaannya sudah selesai. Sekarang dikembalikan ke Dashboard,
+      // sama seperti alur simpan di halaman lain. Jeda 1,2 detik memberi waktu pesan
+      // berhasilnya terbaca dulu sebelum halaman berpindah.
+      setTimeout(() => navigate('/pengantar/dashboard'), 1200);
+    } catch (err) {
+      // Dulu blok ini tidak ada sama sekali: kalau penyimpanan gagal (jaringan putus, foto
+      // lebih dari 10MB, sesi kedaluwarsa), tidak ada pesan apa pun yang muncul dan tombolnya
+      // sekadar berhenti berputar -- persis seperti berhasil. Pengantar Pulau bisa mengira
+      // lokasinya sudah tersimpan padahal belum.
+      showToast(
+        err.response?.data?.message || 'Lokasi gagal disimpan. Periksa koneksi lalu coba lagi.',
+        3500,
+        'error',
+      );
     } finally {
       setLoading(false);
     }
   }
 
+  // h-screen dilepas dari pembungkus terluar. Sebelumnya tinggi halaman dikunci setinggi layar,
+  // padahal isinya (petunjuk, pencarian, peta, foto, tombol simpan) lebih tinggi dari itu.
+  // Akibatnya halaman tidak bisa digulir sama sekali, isi bagian bawah terpotong, dan header
+  // biru yang ber-sticky di dalamnya ikut hilang begitu halaman digeser -- menunya jadi tidak
+  // kelihatan lagi. Dengan tinggi mengikuti isi, halaman bergulir wajar dan headernya tetap
+  // menempel di atas.
   return (
-    <div className="max-w-md mx-auto pb-10 flex flex-col h-screen">
+    <div className="pb-10 bg-background min-h-screen">
       <TopNav title="Pengaturan Lokasi" menu={MENU} />
 
-      <p className="text-xs text-gray-500 px-4 py-2">
+      <p className="wadah-lebar w-full text-xs text-gray-500 px-4 md:px-6 py-2 md:py-3">
         Tap peta atau geser marker untuk menandai lokasi dermaga/rumah kamu. Gunakan tampilan
         <span className="font-semibold"> Satelit </span>
         supaya atap rumah terlihat jelas.
       </p>
 
       {/* Cari nama tempat + tombol lokasi perangkat */}
-      <div className="px-4 pb-2 flex gap-2">
+      <div className="wadah-lebar w-full px-4 md:px-6 pb-2 md:pb-3 flex gap-2">
         <form onSubmit={cariLokasi} className="flex-1 relative">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-gray-400">
             search
@@ -151,7 +177,18 @@ export default function PengaturanLokasi() {
         </button>
       </div>
 
-      <div className="flex-1 px-4 min-h-[240px]">
+      {/* Tinggi peta dipatok, bukan lagi "isi sisa ruang layar" -- karena ruang sisanya
+          sudah habis, peta selalu menyusut ke tinggi minimumnya. Angka 240px di HP
+          disamakan dengan tinggi yang selama ini benar-benar terjadi, supaya tampilan
+          di HP tidak berubah. Di laptop dilebarkan jadi 520px karena ruangnya ada. */}
+      {/* Mulai lebar 768px isi halaman dipecah dua kolom: peta di kiri (lebih lebar karena
+          itu pekerjaan utamanya), panel foto dan tombol simpan di kanan. Sebelumnya semuanya
+          ditumpuk satu kolom ke bawah selebar layar -- foto titik kumpul jadi memanjang lebih
+          dari 1200px dengan tinggi cuma 128px, terpotong jadi strip pipih yang justru
+          menyulitkan mengenali rumahnya. Di HP susunannya tetap bertumpuk seperti sebelumnya. */}
+      <div className="wadah-lebar w-full px-4 md:px-6 md:grid md:grid-cols-12 md:gap-6 md:items-start">
+        <div className="md:col-span-8">
+          <div className="h-[240px] md:h-[520px]">
         <MapContainer center={position} zoom={16} style={{ height: '100%', width: '100%' }}>
           <SimpanPeta petaRef={petaRef} />
 
@@ -177,9 +214,9 @@ export default function PengaturanLokasi() {
 
           <DraggableMarker position={position} setPosition={setPosition} />
         </MapContainer>
-      </div>
+          </div>
 
-      <div className="px-4 py-2 flex items-center justify-between gap-2">
+          <div className="py-2 flex items-center justify-between gap-2">
         <span className="text-xs text-gray-500">
           Lat: {position[0].toFixed(6)}, Lng: {position[1].toFixed(6)}
         </span>
@@ -193,15 +230,19 @@ export default function PengaturanLokasi() {
           <span className="material-symbols-outlined text-[15px]">open_in_new</span>
           Cek di Google Maps
         </a>
-      </div>
+          </div>
+        </div>
 
-      <div className="px-4 pb-3">
+        {/* Kolom kanan: panel foto + tombol simpan. Di laptop dibungkus kartu putih supaya
+            terbaca sebagai satu kesatuan di samping peta, bukan sisa yang tercecer. */}
+        <div className="md:col-span-4 md:bg-white md:rounded-2xl md:shadow-sm md:p-5">
+        <div className="pb-3 md:pb-0">
         <p className="text-xs font-semibold text-[#F4A261] mb-1.5 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-[15px]">image</span>
           Foto Titik Kumpul / Rumah
         </p>
         {(previewUrl || user?.foto) && (
-          <img src={previewUrl || user.foto} alt="Preview lokasi" className="w-full h-32 object-cover rounded-lg mb-2" />
+          <img src={previewUrl || user.foto} alt="Preview lokasi" className="w-full h-32 md:h-44 object-cover rounded-lg md:rounded-xl mb-2 md:mb-3" />
         )}
         <label className="flex items-center justify-center gap-1.5 border border-dashed border-gray-300 rounded-xl py-2.5 text-sm text-gray-500 cursor-pointer">
           <span className="material-symbols-outlined text-[18px]">photo_library</span>
@@ -213,10 +254,12 @@ export default function PengaturanLokasi() {
         </p>
       </div>
 
-      <div className="px-4 pb-4">
-        <button className="btn-primary" onClick={simpan} disabled={loading}>
-          {loading ? 'Menyimpan...' : 'Simpan Lokasi'}
-        </button>
+        <div className="pb-4 md:pb-0 md:pt-5">
+          <button className="btn-primary" onClick={simpan} disabled={loading}>
+            {loading ? 'Menyimpan...' : 'Simpan Lokasi'}
+          </button>
+        </div>
+        </div>
       </div>
     </div>
   );

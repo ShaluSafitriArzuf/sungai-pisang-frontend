@@ -38,8 +38,16 @@ export default function FormPembatalan() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-4">
-      <p className="font-bold text-lg text-laut-dark mb-4">Ajukan Pembatalan</p>
+    <div className="wadah-sempit px-4 md:px-6 pt-4 md:pt-8 md:pb-10">
+      {/* Sebelumnya halaman ini sama sekali tidak punya tombol kembali, jadi wisatawan yang
+          batal mengajukan pembatalan terjebak dan harus pakai tombol back browser. Disamakan
+          dengan pola header di Detail Reservasi & Detail Verifikasi. */}
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => navigate(-1)} type="button" className="text-laut-dark shrink-0">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <p className="font-bold text-lg text-laut-dark">Ajukan Pembatalan</p>
+      </div>
 
       <div className="card mb-4 bg-yellow-50 text-sm text-yellow-700">
         Pembatalan hanya bisa diajukan minimal H-2 sebelum tanggal kunjungan.

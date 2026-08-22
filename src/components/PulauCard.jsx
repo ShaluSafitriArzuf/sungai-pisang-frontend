@@ -10,8 +10,15 @@ export default function PulauCard({ pulau }) {
     : 'Pesona pulau di kawasan Wisata Bahari Sungai Pisang.';
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-md mb-5">
-      <div className="relative h-44">
+    // mb-5 md:mb-0 -- di HP kartu ini ditumpuk ke bawah satu per satu sehingga butuh margin
+    // bawah. Di layar lebar kartunya disusun sebagai grid (lihat Beranda), dan jarak antar
+    // kartu sudah diatur oleh gap grid-nya; margin bawah di sini malah bikin baris tidak rata.
+    //
+    // md:flex md:flex-col md:h-full -- menyamakan tinggi semua kartu dalam satu baris grid,
+    // supaya deskripsi pulau yang panjangnya berbeda-beda tidak membuat kartunya jadi
+    // bertingkat-tingkat.
+    <div className="bg-white rounded-2xl overflow-hidden shadow-md mb-5 md:mb-0 md:flex md:flex-col md:h-full md:transition-all md:duration-200 md:hover:shadow-xl md:hover:-translate-y-1">
+      <div className="relative h-44 md:h-48 shrink-0">
         <img
           src={pulau.foto_utama || fotoPulauFallback(pulau.nama)}
           alt={pulau.nama}
@@ -32,15 +39,15 @@ export default function PulauCard({ pulau }) {
         )}
       </div>
 
-      <div className="p-4">
-        <p className="font-bold text-on-surface text-base">{pulau.nama}</p>
+      <div className="p-4 md:flex md:flex-col md:flex-1">
+        <p className="font-bold text-on-surface text-base md:text-lg">{pulau.nama}</p>
         <p className="flex items-center gap-1 text-xs text-on-surface-variant mt-0.5">
           <span className="material-symbols-outlined text-[14px]">location_on</span>
           Sungai Pisang, Padang
         </p>
-        <p className="text-xs text-on-surface-variant mt-2 leading-relaxed">{deskripsiSingkat}</p>
+        <p className="text-xs text-on-surface-variant mt-2 leading-relaxed md:flex-1">{deskripsiSingkat}</p>
 
-        <div className="flex justify-between items-end mt-3">
+        <div className="flex justify-between items-end mt-3 md:pt-3 md:border-t md:border-outline-variant">
           <div>
             <p className="text-[11px] text-on-surface-variant leading-none">Mulai dari</p>
             <p className="font-bold text-primary text-base leading-tight mt-0.5">

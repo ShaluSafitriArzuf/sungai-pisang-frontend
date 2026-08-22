@@ -68,8 +68,13 @@ export default function DetailReservasi() {
   const lewatBatasBatal = r.status === 'valid' && !r.bisa_ajukan_batal;
 
   return (
-    <div className="max-w-md mx-auto pb-24 px-4 pt-4">
-      <p className="font-bold text-lg text-laut-dark mb-4">Detail Reservasi</p>
+    <div className="wadah-sempit pb-24 md:pb-10 px-4 md:px-6 pt-4 md:pt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => navigate(-1)} type="button" className="text-laut-dark">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <p className="font-bold text-lg text-laut-dark">Detail Reservasi</p>
+      </div>
 
       <div className="card mb-4 space-y-1 text-sm">
         <div className="flex justify-between"><span>Pulau</span><span className="font-semibold">{r.pulau?.nama}</span></div>
@@ -159,6 +164,29 @@ export default function DetailReservasi() {
         <Link to={`/ulasan/${r.id}`} className="btn-primary block text-center mt-3">
           Beri Ulasan
         </Link>
+      )}
+
+      {/* Kalau reservasi ini sudah diulas, tombolnya diganti tampilan ulasan yang sudah
+          dikirim. Satu reservasi hanya boleh satu ulasan, jadi tidak ada tombol ulang di sini. */}
+      {r.status === 'selesai' && r.ulasan && (
+        <div className="card mt-3">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm font-semibold text-on-surface">Ulasan Kamu</p>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+              Sudah diulas
+            </span>
+          </div>
+          <p className="text-yellow-400 text-lg leading-none mb-1">
+            {'★'.repeat(r.ulasan.rating)}
+            <span className="text-gray-300">{'★'.repeat(5 - r.ulasan.rating)}</span>
+          </p>
+          {r.ulasan.komentar && (
+            <p className="text-sm text-on-surface-variant leading-relaxed">{r.ulasan.komentar}</p>
+          )}
+          <p className="text-[11px] text-outline mt-2">
+            Terima kasih atas penilaian kamu. Setiap reservasi hanya bisa diulas satu kali.
+          </p>
+        </div>
       )}
     </div>
   );

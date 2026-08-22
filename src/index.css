@@ -7,20 +7,39 @@ html, body {
 }
 
 body {
-  background-color: #E7E9EC; /* backdrop abu-abu di luar "layar HP" supaya tidak polos di layar lebar */
+  background-color: #fff8f0;
   font-family: 'Poppins', 'Inter', sans-serif;
-  display: flex;
-  justify-content: center;
 }
 
-/* Bungkus seluruh app supaya selalu terlihat seperti layar HP, walau dibuka di browser desktop */
+/* Sebelumnya di sini ada pembungkus yang mengunci seluruh aplikasi pada lebar 448px, sehingga
+   ketika dibuka di browser laptop tampilannya tetap berupa "layar HP" di tengah layar dengan
+   latar abu-abu di kiri-kanannya. Kuncinya dilepas: aplikasi sekarang memakai seluruh lebar
+   layar, dan pembatasan lebar dipindahkan ke masing-masing halaman lewat kelas .wadah-* di
+   bawah, supaya tiap halaman bisa menentukan sendiri seberapa lebar isinya di layar besar. */
 #root {
   width: 100%;
-  max-width: 448px;
   min-height: 100vh;
   background-color: #fff8f0;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.12);
   position: relative;
+}
+
+/* ── Kontainer isi halaman ──
+   Di layar HP ketiganya sama-sama selebar layar, jadi tampilan mobile tidak berubah sama
+   sekali dari sebelumnya. Perbedaannya baru muncul mulai lebar 768px (breakpoint md).
+
+   .wadah-sempit  : formulir dan halaman isian     (maks 672px)
+   .wadah-sedang  : daftar, detail, dashboard      (maks 1024px)
+   .wadah-lebar   : tabel, galeri, halaman CMS     (maks 1280px) */
+.wadah-sempit {
+  @apply w-full max-w-md md:max-w-2xl mx-auto;
+}
+
+.wadah-sedang {
+  @apply w-full max-w-md md:max-w-4xl lg:max-w-5xl mx-auto;
+}
+
+.wadah-lebar {
+  @apply w-full max-w-md md:max-w-5xl lg:max-w-7xl mx-auto;
 }
 
 .btn-primary {
@@ -58,6 +77,44 @@ body {
 .curved-header {
   clip-path: ellipse(100% 70% at 50% 30%);
   height: 320px;
+}
+
+/* ── Satu ikon mata saja di kolom password ──
+   Microsoft Edge (dan Internet Explorer) menyisipkan tombol "reveal" bawaannya sendiri ke
+   dalam setiap <input type="password"> begitu kolomnya diisi dan sedang aktif. Sistem ini
+   sudah punya tombol mata buatan sendiri di setiap kolom password — supaya ikon dan
+   perilakunya sama di semua peramban — sehingga di Edge keduanya tampil bersamaan dan
+   terlihat seperti ada dua tombol mata bertumpuk. Di Chrome dan Firefox hal ini tidak
+   terjadi karena keduanya memang tidak punya tombol bawaan.
+
+   Baris di bawah menyembunyikan tombol bawaan Edge itu, jadi yang tersisa hanya tombol
+   buatan sistem. Berlaku untuk seluruh kolom password: Login, Registrasi, Reset Password,
+   dan Ganti Password. Aturan ::-ms-clear ikut dimatikan karena Edge juga menempelkan
+   tombol silang "hapus isi" dengan cara yang sama. */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+/* ── Peta Leaflet selalu berada DI BAWAH header dan navbar ──
+   Leaflet memasang z-index besar pada lapisan-lapisan petanya sendiri: 200 untuk ubin peta,
+   400 untuk garis, 600 untuk marker, sampai 1000 untuk tombol zoom dan pemilih Satelit.
+   Angka-angka itu bukan cuma berlaku di dalam kotak petanya — kalau kotak peta tidak
+   membentuk lapisan sendiri, angka itu ikut bersaing dengan seluruh isi halaman. Header biru
+   yang menempel di atas nilainya cuma z-20, jadi kalah: begitu halaman digulir, peta naik
+   menimpa header sehingga judul halaman dan deretan menunya tertutup ubin peta.
+
+   Dua baris di bawah ini mengurung angka-angka tersebut di dalam kotak petanya sendiri.
+   Setinggi apa pun z-index di dalam peta, seluruhnya kini tetap berada di bawah header,
+   navbar, toast, dan dialog. Elemen yang berada di LUAR kotak peta tidak terpengaruh sama
+   sekali — legenda di halaman Peta Interaktif dan tombol "Lihat Peta Lengkap" di Detail
+   Pulau tetap tampil di atas peta seperti sebelumnya, karena keduanya memang bukan isi peta.
+
+   Nama kelasnya ditulis dua kali supaya aturan ini pasti menang atas bawaan leaflet.css,
+   tanpa perlu memakai !important. */
+.leaflet-container.leaflet-container {
+  position: relative;
+  z-index: 0;
 }
 
 /* ── Dipakai halaman Peta Interaktif — label pill di bawah tiap marker ── */

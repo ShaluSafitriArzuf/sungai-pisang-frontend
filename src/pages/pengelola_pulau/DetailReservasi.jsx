@@ -42,7 +42,7 @@ export default function DetailReservasi() {
   if (!r) return <p className="p-6 text-center text-sm text-on-surface-variant">Memuat...</p>;
 
   return (
-    <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
+    <div className="wadah-sempit pb-10 bg-background min-h-screen">
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
         <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
           <span className="material-symbols-outlined">arrow_back</span>

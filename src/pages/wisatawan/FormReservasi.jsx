@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { fotoPulauFallback } from '../../utils/fotoPulau';
 import { ikonFasilitasAkomodasi, labelFasilitasAkomodasi } from '../../utils/tampilanFasilitasAkomodasi';
+import { kapasitasAngkaMaksimal } from '../../utils/kapasitas';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -52,7 +53,7 @@ export default function FormReservasi() {
   // wisatawan tidak capek isi form dulu baru gagal pas submit di halaman Pembayaran.
   if (!user?.no_hp) {
     return (
-      <div className="max-w-md mx-auto bg-background min-h-screen">
+      <div className="wadah-sedang bg-background min-h-screen">
         <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
           <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
             <span className="material-symbols-outlined">arrow_back</span>
@@ -121,14 +122,26 @@ export default function FormReservasi() {
   const jumlahOrangAman = Math.max(1, parseInt(jumlahOrang, 10) || 0);
   const jumlahUnitAman = Math.max(1, parseInt(jumlahUnit, 10) || 0);
 
+  // Kapasitas boleh diisi rentang (mis. "4-6") — dipakai sebagai angka lewat angka terbesar
+  // yang ditemukan dalam teksnya, konsisten dengan perhitungan final di backend.
+  const kapasitasPerUnit = kapasitasAngkaMaksimal(akomodasiTerpilih?.kapasitas);
+
   // Saran jumlah unit = jumlah orang dibagi kapasitas per unit, dibulatkan ke atas.
   // Ditampilkan sebagai anjuran, bukan paksaan — wisatawan tetap boleh memesan lebih sedikit
   // unit, misalnya sebagian anggota rombongan membawa tenda sendiri.
-  const unitDisarankan =
-    akomodasiTerpilih?.kapasitas ? Math.ceil(jumlahOrangAman / Number(akomodasiTerpilih.kapasitas)) : 1;
+  const unitDisarankan = kapasitasPerUnit ? Math.ceil(jumlahOrangAman / kapasitasPerUnit) : 1;
+
+  // Akomodasi yang sudah menandai "tiket_termasuk" membebaskan tiket masuk untuk wisatawan
+  // yang tertampung kapasitas unit yang dipesan — sisanya (kalau rombongan melebihi kapasitas)
+  // tetap kena tiket masuk penuh. Ini cuma ESTIMASI tampilan, perhitungan final tetap di backend.
+  const orangDitanggungTiket =
+    jenis === 'menginap' && !bawaTendaSendiri && akomodasiTerpilih?.tiket_termasuk
+      ? Math.min(jumlahOrangAman, kapasitasPerUnit * jumlahUnitAman)
+      : 0;
+  const orangBayarTiket = Math.max(0, jumlahOrangAman - orangDitanggungTiket);
 
   const biayaPenyeberangan = tarifPenyeberangan * jumlahOrangAman;
-  const biayaTiket = tarifTiketMasuk * jumlahOrangAman;
+  const biayaTiket = tarifTiketMasuk * orangBayarTiket;
   const biayaAkomodasi =
     jenis === 'menginap' && !bawaTendaSendiri && akomodasiTerpilih
       ? Number(akomodasiTerpilih.harga_per_malam) * jumlahMalam * jumlahUnitAman
@@ -174,7 +187,7 @@ export default function FormReservasi() {
   }
 
   return (
-    <div className="max-w-md mx-auto pb-24 bg-background min-h-screen">
+    <div className="wadah-sedang pb-24 md:pb-10 bg-background min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-outline-variant sticky top-0 z-20">
         <button onClick={() => navigate(-1)} className="text-on-surface" type="button">
@@ -249,6 +262,13 @@ export default function FormReservasi() {
                   )}
                 </div>
 
+                {akomodasiTerpilih.tiket_termasuk && (
+                  <p className="flex items-center gap-1 text-[11px] font-semibold text-green-700 bg-green-50 rounded-lg px-2.5 py-1.5 mb-1.5">
+                    <span className="material-symbols-outlined text-[14px]">confirmation_number</span>
+                    Harga sudah termasuk tiket masuk pulau (untuk tamu sesuai kapasitas unit)
+                  </p>
+                )}
+
                 {akomodasiTerpilih.fasilitas?.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {akomodasiTerpilih.fasilitas.map((f) => (
@@ -277,7 +297,7 @@ export default function FormReservasi() {
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-on-surface">Jumlah Unit Dipesan</p>
                         <p className="text-[10px] text-on-surface-variant leading-tight mt-0.5">
-                          Muat total {akomodasiTerpilih.kapasitas * jumlahUnitAman} orang
+                          Muat total {kapasitasPerUnit * jumlahUnitAman} orang
                         </p>
                       </div>
 
@@ -444,7 +464,17 @@ export default function FormReservasi() {
 
         <div className="bg-white rounded-xl border border-outline-variant p-4 mb-4 text-sm space-y-1.5">
           <div className="flex justify-between text-on-surface-variant"><span>Penyeberangan</span><span>Rp{biayaPenyeberangan.toLocaleString('id-ID')}</span></div>
-          <div className="flex justify-between text-on-surface-variant"><span>Tiket Masuk</span><span>Rp{biayaTiket.toLocaleString('id-ID')}</span></div>
+          <div className="flex justify-between text-on-surface-variant">
+            <span>
+              Tiket Masuk
+              {orangDitanggungTiket > 0 && (
+                <span className="block text-[10px] text-green-700">
+                  {orangBayarTiket} dari {jumlahOrangAman} orang — {orangDitanggungTiket} sudah termasuk akomodasi
+                </span>
+              )}
+            </span>
+            <span>Rp{biayaTiket.toLocaleString('id-ID')}</span>
+          </div>
           {jenis === 'menginap' && (
             <div className="flex justify-between text-on-surface-variant">
               <span>

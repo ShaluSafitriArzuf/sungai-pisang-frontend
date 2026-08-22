@@ -45,7 +45,7 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [] }) {
                   <span className="w-5 h-5 rounded-full bg-[#004873]/8 flex items-center justify-center shrink-0">
                     <span className="material-symbols-outlined text-[12px] text-[#004873]">square_foot</span>
                   </span>
-                  Luas {p.luas} ha
+                  Luas {p.luas != null ? Number(p.luas) : '-'} ha
                 </div>
 
                 {pengantarUtama && (

@@ -68,7 +68,8 @@ export default function Dashboard() {
     // Backend sekarang mengembalikan reservasi valid + selesai (one day trip & menginap) khusus
     // pulau ini. Di dashboard ini kita cuma mau yang MASIH BERJALAN, jadi disaring lagi status
     // === 'valid' di bawah — yang sudah "selesai" tetap kehitung di Statistik & Ulasan.
-    api.get('/reservasi').then((res) => setReservasi(res.data.data || res.data)).finally(() => setLoading(false));
+    // per_page dinaikkan biar reservasi lama tidak diam-diam kepotong begitu totalnya lewat 20.
+    api.get('/reservasi?per_page=500').then((res) => setReservasi(res.data.data || res.data)).finally(() => setLoading(false));
     if (user?.pulau_id) api.get(`/pulau/${user.pulau_id}`).then((res) => setPulau(res.data));
   }, [user]);
 
@@ -76,90 +77,96 @@ export default function Dashboard() {
   const oneDay = reservasi.filter((r) => r.jenis === 'one_day_trip' && r.status === 'valid');
 
   return (
-    <div className="max-w-md mx-auto pb-10 bg-background min-h-screen">
+    <div className="pb-10 bg-background min-h-screen">
       <TopNav title={pulau?.nama || 'Dashboard Pengelola'} menu={MENU} />
 
-      {/* Kartu profil pulau ringkas */}
-      {pulau && (
-        <div className="px-4 pt-4">
-          <div className="bg-white rounded-2xl shadow-md overflow-hidden flex items-center gap-3 p-3">
-            <img
-              src={pulau.foto_utama || fotoPulauFallback(pulau.nama)}
-              alt={pulau.nama}
-              className="w-16 h-16 rounded-xl object-cover shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-on-surface truncate">{pulau.nama}</p>
-              <p className="text-[11px] text-on-surface-variant flex items-center gap-1 mt-0.5">
-                <span className="material-symbols-outlined text-[13px] text-yellow-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                {pulau.rating_rata_rata ?? 0} rating rata-rata
-              </p>
+      {/* Pembatas lebar isi. TopNav sengaja diletakkan di luar blok ini supaya header
+          birunya membentang penuh selebar layar seperti navbar situs pada umumnya,
+          sementara isi halaman tetap terbaca karena lebarnya dibatasi. */}
+      <div className="wadah-sedang px-0 md:px-6">
+
+        {/* Kartu profil pulau ringkas */}
+        {pulau && (
+          <div className="px-4 pt-4">
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden flex items-center gap-3 p-3">
+              <img
+                src={pulau.foto_utama || fotoPulauFallback(pulau.nama)}
+                alt={pulau.nama}
+                className="w-16 h-16 rounded-xl object-cover shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-on-surface truncate">{pulau.nama}</p>
+                <p className="text-[11px] text-on-surface-variant flex items-center gap-1 mt-0.5">
+                  <span className="material-symbols-outlined text-[13px] text-yellow-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                  {pulau.rating_rata_rata ?? 0} rating rata-rata
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Stat cards */}
-      <div className="px-4 pt-3 grid grid-cols-2 gap-2.5">
-        <div className="bg-white rounded-xl shadow-sm p-3.5">
-          <span className="w-8 h-8 rounded-full bg-[#004873]/10 text-[#004873] flex items-center justify-center mb-2">
-            <span className="material-symbols-outlined text-[16px]">hotel</span>
-          </span>
-          <p className="text-[11px] text-on-surface-variant">Menginap Valid</p>
-          <p className="text-xl font-bold text-on-surface">{loading ? '–' : menginap.length}</p>
+        {/* Stat cards */}
+        <div className="px-4 pt-3 grid grid-cols-2 gap-2.5 md:gap-4">
+          <div className="bg-white rounded-xl shadow-sm p-3.5">
+            <span className="w-8 h-8 rounded-full bg-[#004873]/10 text-[#004873] flex items-center justify-center mb-2">
+              <span className="material-symbols-outlined text-[16px]">hotel</span>
+            </span>
+            <p className="text-[11px] text-on-surface-variant">Menginap Valid</p>
+            <p className="text-xl font-bold text-on-surface">{loading ? '–' : menginap.length}</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-3.5">
+            <span className="w-8 h-8 rounded-full bg-[#F4A261]/15 text-[#F4A261] flex items-center justify-center mb-2">
+              <span className="material-symbols-outlined text-[16px]">wb_sunny</span>
+            </span>
+            <p className="text-[11px] text-on-surface-variant">One Day Trip Valid</p>
+            <p className="text-xl font-bold text-on-surface">{loading ? '–' : oneDay.length}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm p-3.5">
-          <span className="w-8 h-8 rounded-full bg-[#F4A261]/15 text-[#F4A261] flex items-center justify-center mb-2">
-            <span className="material-symbols-outlined text-[16px]">wb_sunny</span>
-          </span>
-          <p className="text-[11px] text-on-surface-variant">One Day Trip Valid</p>
-          <p className="text-xl font-bold text-on-surface">{loading ? '–' : oneDay.length}</p>
-        </div>
-      </div>
 
-      {/* Reservasi Menginap */}
-      <div className="px-4 mt-5">
-        <div className="flex items-center justify-between mb-2">
-          <p className="font-bold text-on-surface flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[18px] text-[#004873]">hotel</span>
-            Reservasi Menginap Masuk
-          </p>
-          {menginap.length > 0 && (
-            <span className="text-[11px] font-semibold text-on-surface-variant">{menginap.length} tamu</span>
-          )}
+        {/* Reservasi Menginap */}
+        <div className="px-4 mt-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-bold text-on-surface flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[18px] text-[#004873]">hotel</span>
+              Reservasi Menginap Masuk
+            </p>
+            {menginap.length > 0 && (
+              <span className="text-[11px] font-semibold text-on-surface-variant">{menginap.length} tamu</span>
+            )}
+          </div>
+          <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 md:gap-3">
+            {!loading && menginap.map((r) => (
+              <KartuTamu
+                key={r.id}
+                r={r}
+                subtitle={`${r.akomodasi?.nama || (r.bawa_tenda_sendiri ? 'Bawa Tenda Sendiri' : '-')} · ${formatTanggal(r.tanggal_kunjungan)}${r.tanggal_selesai ? ` – ${formatTanggal(r.tanggal_selesai)}` : ''}`}
+              />
+            ))}
+            {!loading && menginap.length === 0 && (
+              <EmptyState icon="hotel" text="Belum ada reservasi menginap valid." />
+            )}
+          </div>
         </div>
-        <div className="space-y-2">
-          {!loading && menginap.map((r) => (
-            <KartuTamu
-              key={r.id}
-              r={r}
-              subtitle={`${r.akomodasi?.nama || (r.bawa_tenda_sendiri ? 'Bawa Tenda Sendiri' : '-')} · ${formatTanggal(r.tanggal_kunjungan)}${r.tanggal_selesai ? ` – ${formatTanggal(r.tanggal_selesai)}` : ''}`}
-            />
-          ))}
-          {!loading && menginap.length === 0 && (
-            <EmptyState icon="hotel" text="Belum ada reservasi menginap valid." />
-          )}
-        </div>
-      </div>
 
-      {/* Kunjungan One Day Trip */}
-      <div className="px-4 mt-5">
-        <div className="flex items-center justify-between mb-2">
-          <p className="font-bold text-on-surface flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[18px] text-[#F4A261]">wb_sunny</span>
-            Kunjungan One Day Trip
-          </p>
-          {oneDay.length > 0 && (
-            <span className="text-[11px] font-semibold text-on-surface-variant">{oneDay.length} tamu</span>
-          )}
-        </div>
-        <div className="space-y-2">
-          {!loading && oneDay.map((r) => (
-            <KartuTamu key={r.id} r={r} subtitle={`Kunjungan · ${formatTanggal(r.tanggal_kunjungan)}`} />
-          ))}
-          {!loading && oneDay.length === 0 && (
-            <EmptyState icon="wb_sunny" text="Belum ada kunjungan one day trip valid." />
-          )}
+        {/* Kunjungan One Day Trip */}
+        <div className="px-4 mt-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-bold text-on-surface flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[18px] text-[#F4A261]">wb_sunny</span>
+              Kunjungan One Day Trip
+            </p>
+            {oneDay.length > 0 && (
+              <span className="text-[11px] font-semibold text-on-surface-variant">{oneDay.length} tamu</span>
+            )}
+          </div>
+          <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 md:gap-3">
+            {!loading && oneDay.map((r) => (
+              <KartuTamu key={r.id} r={r} subtitle={`Kunjungan · ${formatTanggal(r.tanggal_kunjungan)}`} />
+            ))}
+            {!loading && oneDay.length === 0 && (
+              <EmptyState icon="wb_sunny" text="Belum ada kunjungan one day trip valid." />
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -39,7 +39,7 @@ export default function Register() {
   if (berhasilDaftar) {
     return (
       <div className="bg-background min-h-screen flex flex-col items-center justify-center px-container-margin">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-black/10 p-8 flex flex-col items-center text-center">
+        <div className="w-full max-w-md md:max-w-lg bg-white rounded-2xl shadow-xl shadow-black/10 p-8 md:p-10 flex flex-col items-center text-center">
           <span className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
             <span className="material-symbols-outlined text-[30px]">mark_email_read</span>
           </span>
@@ -62,7 +62,7 @@ export default function Register() {
   return (
     <div className="bg-background min-h-screen flex flex-col items-center">
       {/* Header foto — ganti url ini dengan foto asli Pulau Sungai Pisang kalau sudah ada */}
-      <div className="w-full relative overflow-hidden curved-header">
+      <div className="w-full relative overflow-hidden curved-header md:!h-[440px]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -73,13 +73,13 @@ export default function Register() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
 
         <div className="absolute top-12 left-0 right-0 flex flex-col items-center justify-center text-white z-10 px-container-margin">
-          <h1 className="font-display-lg-mobile text-display-lg-mobile tracking-tight">Jelajah Bahari</h1>
+          <h1 className="font-display-lg-mobile text-display-lg-mobile md:text-5xl md:font-bold tracking-tight">Jelajah Bahari</h1>
           <p className="font-label-md text-label-md opacity-90 tracking-widest uppercase mt-1">Eksplorasi Nusantara</p>
         </div>
       </div>
 
-      <main className="w-full max-w-md -mt-24 px-container-margin mb-12 relative z-20">
-        <div className="bg-white rounded-2xl shadow-xl shadow-black/10 p-8 flex flex-col">
+      <main className="w-full max-w-md md:max-w-lg -mt-24 md:-mt-44 px-container-margin mb-12 md:mb-16 relative z-20">
+        <div className="bg-white rounded-2xl shadow-xl shadow-black/10 p-8 md:p-10 flex flex-col">
           <div className="mb-8">
             <h2 className="font-headline-md text-headline-md text-primary mb-2">Buat Akun Baru</h2>
             <p className="font-body-md text-body-md text-on-surface-variant">

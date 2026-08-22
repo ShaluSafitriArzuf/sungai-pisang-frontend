@@ -12,8 +12,11 @@ const items = [
 export default function BottomNav() {
   const belumDibaca = useJumlahNotifBelumDibaca();
 
+  // md:hidden -- mulai lebar 768px navigasi diambil alih NavbarDesktop (menu mendatar di atas).
+  // Tab bar yang menempel di dasar layar seperti ini adalah pola aplikasi HP; kalau ikut tampil
+  // di browser laptop, situsnya terbaca sebagai aplikasi mobile yang sekadar dilebarkan.
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant flex justify-around py-2 max-w-md mx-auto">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant flex justify-around py-2 max-w-md mx-auto">
       {items.map((item) => (
         <NavLink
           key={item.to}
