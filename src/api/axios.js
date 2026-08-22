@@ -5,7 +5,7 @@ import axios from 'axios';
 // permintaan data gagal.
 //
 // Nilainya diambil dari variabel lingkungan VITE_API_URL yang diatur lewat berkas .env:
-//   - Saat pengembangan  : .env.development  -> http://localhost:8000/api
+//   - Saat pengembangan  : .env.development  -> http://jelajahbahari.my.id/api
 //   - Saat hosting       : .env.production   -> https://api.domainmu.com/api
 //
 // Nilai cadangan localhost tetap disediakan supaya aplikasi tidak langsung rusak kalau
