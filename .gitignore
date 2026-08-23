@@ -25,3 +25,6 @@ dist-ssr
 
 # Berkas lama yang menunggu dihapus manual
 _to_delete/
+
+# Cadangan otomatis sebelum penyuntingan berkas
+*.sebelum-diubah

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -6,6 +6,7 @@ import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import TopNav from '../../components/TopNav';
+import { pengantarIcon } from '../../utils/mapIcons';
 
 const MENU = [
   { to: '/pengantar/dashboard', label: 'Dashboard' },
@@ -21,7 +22,10 @@ function DraggableMarker({ position, setPosition }) {
       setPosition([e.latlng.lat, e.latlng.lng]);
     },
   });
-  return <Marker position={position} draggable eventHandlers={{
+  // icon={pengantarIcon} WAJIB. Tanpa ini Leaflet memakai ikon bawaannya, dan berkas
+  // gambarnya tidak ikut terbawa saat proyek di-build sehingga marker tampil sebagai
+  // gambar rusak. pengantarIcon berupa divIcon (HTML murni), jadi tidak pernah gagal muat.
+  return <Marker position={position} draggable icon={pengantarIcon} eventHandlers={{
     dragend: (e) => setPosition([e.target.getLatLng().lat, e.target.getLatLng().lng]),
   }} />;
 }
@@ -47,6 +51,27 @@ export default function PengaturanLokasi() {
   const [loading, setLoading] = useState(false);
   const [cari, setCari] = useState('');
   const [cariLoading, setCariLoading] = useState(false);
+
+  // Koordinat yang sudah tersimpan sering baru tiba SESUDAH halaman ini digambar, karena
+  // AuthContext masih mengambil data user. Nilai awal useState di atas hanya dibaca sekali,
+  // jadi tanpa penyelarasan ini marker menetap di titik cadangan -- dan penyimpanan
+  // berikutnya malah menimpa koordinat asli dengan titik cadangan itu.
+  // Dijalankan sekali saja lewat penanda sudahDisetel, supaya marker yang sedang digeser
+  // pengguna tidak ditarik balik ketika data user datang terlambat.
+  const sudahDisetel = useRef(false);
+
+  useEffect(() => {
+    if (sudahDisetel.current) return;
+    if (!user?.latitude || !user?.longitude) return;
+
+    const lat = Number(user.latitude);
+    const lng = Number(user.longitude);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+    sudahDisetel.current = true;
+    setPosition([lat, lng]);
+    petaRef.current?.flyTo([lat, lng], 17);
+  }, [user?.latitude, user?.longitude]);
 
   function pindahPeta(lat, lng, zoom = 18) {
     setPosition([lat, lng]);
