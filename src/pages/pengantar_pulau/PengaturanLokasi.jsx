@@ -38,7 +38,7 @@ function SimpanPeta({ petaRef }) {
 }
 
 export default function PengaturanLokasi() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const petaRef = useRef(null);
@@ -133,8 +133,17 @@ export default function PengaturanLokasi() {
       formData.append('longitude', position[1]);
       if (fotoFile) formData.append('foto', fotoFile);
 
-      await api.post('/peta/lokasi-saya', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await api.post('/peta/lokasi-saya', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       showToast('Lokasi berhasil disimpan.', 2000, 'sukses');
+
+      // INI KUNCINYA. Data user dipegang AuthContext dan disimpan di localStorage sejak
+      // login, lalu TIDAK pernah diambil ulang dari server. Jadi walaupun koordinat baru
+      // sudah tersimpan di basis data, halaman ini tetap membaca koordinat LAMA dari
+      // localStorage setiap kali dibuka -- kelihatannya seperti simpanan yang gagal,
+      // padahal databasenya sudah benar. Backend mengembalikan user terbaru pada
+      // res.data.data, jadi tinggal disalurkan ke updateUser() supaya localStorage dan
+      // seluruh aplikasi ikut memakai koordinat yang baru.
+      if (res.data?.data) updateUser(res.data.data);
 
       // Sebelumnya halaman ini diam di tempat setelah menyimpan. Pesan "berhasil" muncul
       // sebentar lalu hilang, dan yang tersisa di layar tetap formulir yang sama persis --
