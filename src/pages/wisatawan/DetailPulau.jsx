@@ -357,12 +357,6 @@ export default function DetailPulau() {
               </div>
             </div>
           </div>
-
-          <p className="text-[11px] text-on-surface-variant leading-relaxed mt-2">
-            {termurahAkomodasi !== null
-              ? `Akomodasi dihitung per unit per malam, mulai ${formatRupiah(termurahAkomodasi)}. Pilihan “Bawa Tenda Sendiri” tidak dikenakan biaya akomodasi.`
-              : 'Belum ada akomodasi berbayar di pulau ini. Untuk menginap, wisatawan membawa tenda sendiri.'}
-          </p>
         </div>
 
         {/* Fasilitas Pulau */}
@@ -457,9 +451,6 @@ export default function DetailPulau() {
         {pulau.wahana_kegiatan?.length > 0 && (
           <div className="mt-5">
             <p className="font-bold text-on-surface">Wahana &amp; Aktivitas</p>
-            <p className="text-[11px] text-on-surface-variant mb-2">
-              Daftar aktivitas yang ada di pulau ini — sebagian gratis, sebagian dibayar langsung di lokasi.
-            </p>
             <div className="space-y-2">
               {pulau.wahana_kegiatan.map((w) => {
                 const { icon, warna } = ikonWahana(w.nama);
