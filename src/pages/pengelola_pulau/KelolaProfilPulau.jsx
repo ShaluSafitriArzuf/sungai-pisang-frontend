@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import TopNav from '../../components/TopNav';
 import { fotoPulauFallback } from '../../utils/fotoPulau';
 import { FASILITAS_OPSI } from '../../utils/tampilanFasilitas';
+import DigitasiBatas from '../../components/DigitasiBatas';
 
 const MENU = [
   { to: '/pengelola/dashboard', label: 'Dashboard' },
@@ -101,6 +102,18 @@ export default function KelolaProfilPulau() {
       formData.append('genset_24_jam', form.genset_24_jam ? '1' : '0');
       formData.append('regulasi', form.regulasi || '');
       (form.fasilitas || []).forEach((f) => formData.append('fasilitas[]', f));
+
+      // Batas wilayah hasil digitasi. FormData tidak bisa mengirim larik kosong, jadi
+      // penghapusan batas dikabarkan lewat penanda tersendiri.
+      const batas = form.batas_koordinat || [];
+      if (batas.length >= 3) {
+        batas.forEach((t, i) => {
+          formData.append(`batas_koordinat[${i}][0]`, t[0]);
+          formData.append(`batas_koordinat[${i}][1]`, t[1]);
+        });
+      } else {
+        formData.append('hapus_batas', '1');
+      }
       if (fotoFile) formData.append('foto_utama', fotoFile);
 
       const res = await api.post(`/pulau/${user.pulau_id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -173,6 +186,14 @@ export default function KelolaProfilPulau() {
               placeholder="mis. 5"
               value={form.luas || ''}
               onChange={(e) => setForm({ ...form, luas: e.target.value })}
+            />
+          </Field>
+
+          <Field label="Batas Wilayah Pulau (digitasi peta)" icon="polyline">
+            <DigitasiBatas
+              titik={form.batas_koordinat || []}
+              pusat={[form.latitude, form.longitude]}
+              onChange={(titik) => setForm({ ...form, batas_koordinat: titik })}
             />
           </Field>
 

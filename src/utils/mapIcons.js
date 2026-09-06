@@ -17,3 +17,13 @@ export function pinIcon(bg, iconName) {
 
 export const pulauIcon = pinIcon('#004873', 'landscape');
 export const pengantarIcon = pinIcon('#F4A261', 'directions_boat');
+
+// Titik biru posisi pengguna, mengikuti kelaziman aplikasi peta pada umumnya.
+export const lokasiSayaIcon = L.divIcon({
+  html: `<div style="width:16px;height:16px;border-radius:50%;background:#1A73E8;border:3px solid white;
+           box-shadow:0 0 0 7px rgba(26,115,232,0.22), 0 1px 4px rgba(0,0,0,0.35);"></div>`,
+  className: '',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+  popupAnchor: [0, -14],
+});
