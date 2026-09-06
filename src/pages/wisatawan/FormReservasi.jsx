@@ -6,6 +6,7 @@ import { ikonFasilitasAkomodasi, labelFasilitasAkomodasi } from '../../utils/tam
 import { kapasitasAngkaMaksimal } from '../../utils/kapasitas';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import FormPeserta from '../../components/FormPeserta';
 
 export default function FormReservasi() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function FormReservasi() {
   const [tanggal, setTanggal] = useState('');
   const [tanggalSelesai, setTanggalSelesai] = useState('');
   const [jumlahOrang, setJumlahOrang] = useState(1);
+  const [peserta, setPeserta] = useState([]);
   const [ketersediaan, setKetersediaan] = useState(null); // { jumlah_unit, sisa_unit, tersedia }
   const [cekLoading, setCekLoading] = useState(false);
 
@@ -46,6 +48,31 @@ export default function FormReservasi() {
     return () => { batal = true; };
   }, [jenis, bawaTendaSendiri, akomodasiId, tanggal, tanggalSelesai]);
 
+  // jumlahOrang bisa sementara kosong ('') selagi user lagi ngetik ulang di input-nya,
+  // jadi kalkulasi biaya pakai versi "aman" ini (minimal 1) supaya tidak muncul NaN.
+  const jumlahOrangAman = Math.max(1, parseInt(jumlahOrang, 10) || 0);
+  const jumlahUnitAman = Math.max(1, parseInt(jumlahUnit, 10) || 0);
+
+  // Jumlah baris identitas selalu mengikuti jumlah wisatawan. Baris pertama diisikan
+  // otomatis dari profil pemesan supaya tidak perlu mengetik ulang data dirinya sendiri.
+  useEffect(() => {
+    setPeserta((lama) => {
+      const baru = [...lama];
+      while (baru.length < jumlahOrangAman) {
+        baru.push({ nama: '', no_identitas: '', jenis_kelamin: 'L', usia: '', no_hp: '' });
+      }
+      const dipotong = baru.slice(0, jumlahOrangAman);
+      if (dipotong.length && user && !dipotong[0].nama && !dipotong[0].no_hp) {
+        dipotong[0] = { ...dipotong[0], nama: user.name || '', no_hp: user.no_hp || '' };
+      }
+      return dipotong;
+    });
+  }, [jumlahOrangAman, user]);
+
+  // PENTING: seluruh hook di atas WAJIB berada sebelum baris-baris "return" awal di bawah.
+  // React menuntut jumlah dan urutan hook sama di setiap render; kalau sebuah useEffect
+  // diletakkan setelah early return, render pertama (saat data pulau masih dimuat)
+  // mendaftarkan lebih sedikit hook daripada render berikutnya dan halaman langsung rusak.
   if (!pulau) return <p className="p-6 text-center">Memuat...</p>;
 
   // Nomor HP wajib diisi dulu sebelum reservasi — supaya Pengantar/Pengelola Pulau punya cara
@@ -117,11 +144,6 @@ export default function FormReservasi() {
       ? Math.max(1, Math.round((new Date(tanggalSelesai) - new Date(tanggal)) / 86400000))
       : 0;
 
-  // jumlahOrang bisa sementara kosong ('') selagi user lagi ngetik ulang di input-nya,
-  // jadi kalkulasi biaya pakai versi "aman" ini (minimal 1) supaya tidak muncul NaN.
-  const jumlahOrangAman = Math.max(1, parseInt(jumlahOrang, 10) || 0);
-  const jumlahUnitAman = Math.max(1, parseInt(jumlahUnit, 10) || 0);
-
   // Kapasitas boleh diisi rentang (mis. "4-6") — dipakai sebagai angka lewat angka terbesar
   // yang ditemukan dalam teksnya, konsisten dengan perhitungan final di backend.
   const kapasitasPerUnit = kapasitasAngkaMaksimal(akomodasiTerpilih?.kapasitas);
@@ -170,6 +192,26 @@ export default function FormReservasi() {
       return;
     }
 
+    for (let i = 0; i < peserta.length; i += 1) {
+      const orang = peserta[i];
+      if (!String(orang.nama || '').trim()) {
+        showToast(`Nama peserta ke-${i + 1} belum diisi.`, 2800, 'peringatan');
+        return;
+      }
+      if (String(orang.usia ?? '').trim() === '' || Number.isNaN(Number(orang.usia))) {
+        showToast(`Usia peserta ke-${i + 1} belum diisi.`, 2800, 'peringatan');
+        return;
+      }
+      if (Number(orang.usia) >= 17 && !String(orang.no_identitas || '').trim()) {
+        showToast(
+          `Nomor identitas peserta ke-${i + 1} wajib diisi karena usianya 17 tahun ke atas.`,
+          3200,
+          'peringatan'
+        );
+        return;
+      }
+    }
+
     navigate('/reservasi/pembayaran', {
       state: {
         pulau_id: pulau.id,
@@ -180,6 +222,13 @@ export default function FormReservasi() {
         tanggal_kunjungan: tanggal,
         tanggal_selesai: jenis === 'menginap' ? tanggalSelesai : null,
         jumlah_orang: jumlahOrangAman,
+        peserta: peserta.map((orang) => ({
+          nama: String(orang.nama).trim(),
+          no_identitas: String(orang.no_identitas || '').trim() || null,
+          jenis_kelamin: orang.jenis_kelamin || 'L',
+          usia: Number(orang.usia),
+          no_hp: String(orang.no_hp || '').trim() || null,
+        })),
         total_estimasi: total,
         nama_pulau: pulau.nama,
       },
@@ -460,6 +509,17 @@ export default function FormReservasi() {
               +
             </button>
           </div>
+        </div>
+
+        {/* ── Identitas peserta ── */}
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-[#F4A261] mb-1.5">Data Peserta</p>
+          <p className="text-[11px] text-on-surface-variant mb-3 leading-snug">
+            Identitas setiap peserta wajib diisi karena menjadi dasar manifest penumpang kapal.
+            Bila terjadi keadaan darurat di laut, data inilah yang dipakai untuk mengetahui
+            siapa saja yang berada di atas kapal.
+          </p>
+          <FormPeserta daftar={peserta} onChange={setPeserta} />
         </div>
 
         <div className="bg-white rounded-xl border border-outline-variant p-4 mb-4 text-sm space-y-1.5">

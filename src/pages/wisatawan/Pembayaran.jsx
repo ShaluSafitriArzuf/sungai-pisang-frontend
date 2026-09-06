@@ -60,11 +60,22 @@ export default function Pembayaran() {
         tanggal_kunjungan: state.tanggal_kunjungan,
         tanggal_selesai: state.tanggal_selesai || null,
         jumlah_orang: state.jumlah_orang,
+        // Identitas peserta ikut dikirim dan disimpan bersama reservasi — jumlah barisnya
+        // harus sama dengan jumlah_orang, kalau tidak backend menolak.
+        peserta: state.peserta || [],
         bukti_transfer: buktiBase64,
       });
       navigate('/reservasi');
     } catch (err) {
-      setError(err.response?.data?.message || 'Gagal mengirim reservasi.');
+      // Backend mengirim {message} untuk penolakan aturan bisnis, tetapi {errors} untuk
+      // kegagalan validasi. Tanpa cabang kedua, kesalahan pengisian data peserta hanya
+      // tampil sebagai "Gagal mengirim reservasi" tanpa memberi tahu apa yang salah.
+      const daftarError = err.response?.data?.errors;
+      setError(
+        err.response?.data?.message
+          || (daftarError ? Object.values(daftarError).flat().join(' ') : '')
+          || 'Gagal mengirim reservasi.'
+      );
     } finally {
       setLoading(false);
     }

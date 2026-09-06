@@ -25,9 +25,45 @@ export default function DetailReservasi() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
+  const [unduh, setUnduh] = useState('');
+
   useEffect(() => {
     api.get(`/reservasi/${id}`).then((res) => setR(res.data));
   }, [id]);
+
+  // Berkas PDF diambil lewat axios, bukan tautan biasa, karena rutenya terlindungi token
+  // Sanctum — tautan <a> tidak membawa header Authorization sehingga akan ditolak 401.
+  async function unduhDokumen(jenisDokumen) {
+    setUnduh(jenisDokumen);
+    try {
+      const res = await api.get(`/reservasi/${id}/${jenisDokumen}`, { responseType: 'blob' });
+      const nama = jenisDokumen === 'invoice' ? 'Invoice' : 'Tiket';
+      const berkas = `${nama}-${r?.kode_booking || id}.pdf`;
+
+      const alamat = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const tautan = document.createElement('a');
+      tautan.href = alamat;
+      tautan.download = berkas;
+      document.body.appendChild(tautan);
+      tautan.click();
+      tautan.remove();
+      // Dilepas belakangan: sebagian peramban membatalkan unduhan kalau alamat blob-nya
+      // dicabut tepat setelah klik.
+      setTimeout(() => window.URL.revokeObjectURL(alamat), 1500);
+    } catch (err) {
+      // Respons error ikut berbentuk blob karena responseType di atas, jadi pesannya dibaca dulu.
+      let pesan = 'Gagal mengunduh dokumen.';
+      try {
+        const teks = await err.response?.data?.text?.();
+        if (teks) pesan = JSON.parse(teks).message || pesan;
+      } catch (abaikan) {
+        // biarkan pesan bawaan
+      }
+      showToast(pesan, 3200, 'peringatan');
+    } finally {
+      setUnduh('');
+    }
+  }
 
   if (!r) return <p className="p-6 text-center">Memuat...</p>;
 
@@ -105,7 +141,74 @@ export default function DetailReservasi() {
         )}
         <div className="flex justify-between"><span>Jumlah Orang</span><span>{r.jumlah_orang}</span></div>
         <div className="flex justify-between"><span>Total Bayar</span><span className="font-bold text-karang-dark">Rp{Number(r.total_bayar).toLocaleString('id-ID')}</span></div>
+        {r.kode_booking && (
+          <div className="flex justify-between"><span>Kode Pemesanan</span><span className="font-mono font-semibold">{r.kode_booking}</span></div>
+        )}
         <div className="flex justify-between items-center pt-2"><span>Status</span><StatusBadge status={r.status} /></div>
+      </div>
+
+      {/* ── Dokumen ── */}
+      <div className="card mb-4 text-sm">
+        <p className="font-semibold mb-1">Dokumen</p>
+        <p className="text-gray-500 text-xs mb-3">
+          Invoice memuat rincian biaya dan dapat diunduh kapan saja. Tiket berisi kode
+          pemesanan serta daftar peserta, dan terbit setelah pembayaran diverifikasi.
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => unduhDokumen('invoice')}
+            disabled={unduh !== ''}
+            className="flex-1 flex items-center justify-center gap-1.5 border border-outline-variant text-[#004873] font-semibold py-2.5 rounded-xl text-xs disabled:opacity-60"
+          >
+            <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+            {unduh === 'invoice' ? 'Menyiapkan...' : 'Unduh Invoice'}
+          </button>
+          <button
+            type="button"
+            onClick={() => unduhDokumen('tiket')}
+            disabled={unduh !== '' || !['valid', 'selesai'].includes(r.status)}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-[#004873] text-white font-semibold py-2.5 rounded-xl text-xs disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined text-[16px]">confirmation_number</span>
+            {unduh === 'tiket' ? 'Menyiapkan...' : 'Unduh Tiket'}
+          </button>
+        </div>
+        {!['valid', 'selesai'].includes(r.status) && (
+          <p className="text-[11px] text-on-surface-variant mt-2 leading-snug">
+            Tiket belum dapat diunduh karena pembayaran reservasi ini belum diverifikasi
+            oleh Pengantar Pulau.
+          </p>
+        )}
+      </div>
+
+      {/* ── Daftar peserta ── */}
+      <div className="card mb-4 text-sm">
+        <p className="font-semibold mb-1">Daftar Peserta</p>
+        {r.peserta?.length ? (
+          <div className="divide-y divide-outline-variant">
+            {r.peserta.map((orang, i) => (
+              <div key={orang.id ?? i} className="py-2.5 flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#004873] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-semibold text-on-surface">{orang.nama}</p>
+                  <p className="text-xs text-on-surface-variant">
+                    {orang.jenis_kelamin === 'P' ? 'Perempuan' : 'Laki-laki'} &middot; {orang.usia} tahun
+                    {orang.no_identitas ? <> &middot; {orang.no_identitas}</> : null}
+                  </p>
+                  {orang.no_hp && <p className="text-xs text-on-surface-variant">{orang.no_hp}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-xs leading-snug">
+            Reservasi ini dibuat sebelum pencatatan identitas peserta diberlakukan, sehingga
+            daftar pesertanya belum tersedia.
+          </p>
+        )}
       </div>
 
       {r.status === 'ditolak' && (

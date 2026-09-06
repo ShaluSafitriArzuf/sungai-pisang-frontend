@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import TopNav from '../../components/TopNav';
 
+// Tanggal hari ini menurut waktu setempat. toISOString() memakai UTC, sehingga sebelum
+// pukul 07.00 WIB halaman ini akan membuka manifest tanggal KEMARIN.
+function tanggalLokalHariIni() {
+  const d = new Date();
+  const bulan = String(d.getMonth() + 1).padStart(2, '0');
+  const hari = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${bulan}-${hari}`;
+}
+
 const MENU = [
   { to: '/pengantar/dashboard', label: 'Dashboard' },
   { to: '/pengantar/manifest', label: 'Manifest' },
@@ -11,7 +20,7 @@ const MENU = [
 ];
 
 export default function Manifest() {
-  const [tanggal, setTanggal] = useState(new Date().toISOString().slice(0, 10));
+  const [tanggal, setTanggal] = useState(tanggalLokalHariIni());
   const [data, setData] = useState({ reservasi: [], jumlah_wisatawan: 0 });
   const [loading, setLoading] = useState(false);
 
@@ -150,6 +159,69 @@ export default function Manifest() {
                 </tfoot>
               </table>
             </div>
+
+            {/* ── Identitas penumpang per orang ──
+                Tabel di atas berisi rombongan; bagian ini memecahnya menjadi daftar orang
+                per orang. Inilah manifest yang sesungguhnya dipakai kalau terjadi keadaan
+                darurat di laut, karena memuat identitas seluruh penumpang, bukan hanya
+                nama pemesannya. */}
+            {(() => {
+              const penumpang = data.reservasi.flatMap((r) =>
+                (r.peserta || []).map((orang) => ({ ...orang, reservasi: r }))
+              );
+
+              return (
+                <div className="mt-6">
+                  <p className="font-bold text-on-surface mb-1">Daftar Penumpang</p>
+                  <p className="text-xs text-on-surface-variant mb-3">
+                    Identitas setiap orang yang menyeberang &mdash; tercatat {penumpang.length} dari{' '}
+                    {data.jumlah_wisatawan} orang.
+                  </p>
+
+                  {penumpang.length === 0 ? (
+                    <div className="card text-sm text-on-surface-variant">
+                      Belum ada identitas peserta yang tercatat untuk tanggal ini. Reservasi yang
+                      dibuat sebelum pencatatan identitas diberlakukan tidak memiliki data ini,
+                      sehingga identitasnya perlu ditanyakan langsung sebelum keberangkatan.
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-2xl shadow-md overflow-x-auto">
+                      <table className="w-full text-sm min-w-[640px]">
+                        <thead>
+                          <tr className="bg-[#004873] text-white text-left">
+                            <th className="py-3 px-4 font-semibold w-12">No</th>
+                            <th className="py-3 px-4 font-semibold">Nama Lengkap</th>
+                            <th className="py-3 px-4 font-semibold">No. Identitas</th>
+                            <th className="py-3 px-4 font-semibold">L/P</th>
+                            <th className="py-3 px-4 font-semibold">Usia</th>
+                            <th className="py-3 px-4 font-semibold">No. HP</th>
+                            <th className="py-3 px-4 font-semibold">Kode Pemesanan</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {penumpang.map((orang, i) => (
+                            <tr
+                              key={`${orang.reservasi.id}-${orang.id ?? i}`}
+                              className={`border-t border-outline-variant ${i % 2 === 1 ? 'bg-surface-container/40' : ''}`}
+                            >
+                              <td className="py-2.5 px-4 text-on-surface-variant">{i + 1}</td>
+                              <td className="py-2.5 px-4 font-semibold text-on-surface">{orang.nama}</td>
+                              <td className="py-2.5 px-4 text-on-surface-variant">{orang.no_identitas || '-'}</td>
+                              <td className="py-2.5 px-4 text-on-surface-variant">{orang.jenis_kelamin}</td>
+                              <td className="py-2.5 px-4 text-on-surface-variant">{orang.usia}</td>
+                              <td className="py-2.5 px-4 text-on-surface-variant">{orang.no_hp || '-'}</td>
+                              <td className="py-2.5 px-4 font-mono text-xs text-on-surface-variant">
+                                {orang.reservasi.kode_booking || '-'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </>
         )}
       </div>
