@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
+import Captcha from '../../components/Captcha';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -28,6 +29,8 @@ export default function Login() {
   // password) — tampilkan tombol "kirim ulang" alih-alih cuma pesan error biasa.
   const [perluVerifikasi, setPerluVerifikasi] = useState(false);
   const [kirimUlangStatus, setKirimUlangStatus] = useState('');
+  const [captcha, setCaptcha] = useState('');
+  const [ulangCaptcha, setUlangCaptcha] = useState(0);
 
   // Kalau baru saja klik link verifikasi di email, backend redirect balik kesini bawa
   // ?verifikasi=berhasil/gagal/kadaluarsa (lihat AuthController@verifikasiEmail) — tampilkan
@@ -45,9 +48,15 @@ export default function Login() {
     setError('');
     setPerluVerifikasi(false);
     setKirimUlangStatus('');
+
+    if (!captcha) {
+      setError('Centang dulu kotak "Saya bukan robot" sebelum masuk.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const user = await login(form.email, form.password);
+      const user = await login(form.email, form.password, captcha);
       showToast(`Selamat datang, ${user.name}!`, 2000);
       if (user.role === 'wisatawan') navigate('/beranda');
       else if (user.role === 'pengantar_pulau') navigate('/pengantar/dashboard');
@@ -75,6 +84,11 @@ export default function Login() {
       }
 
       setPerluVerifikasi(Boolean(err.response?.data?.perlu_verifikasi_email));
+
+      // Token reCAPTCHA sekali pakai — begitu permintaan gagal, kotaknya dikosongkan
+      // supaya pengguna mencentang ulang sebelum mencoba lagi.
+      setCaptcha('');
+      setUlangCaptcha((n) => n + 1);
     } finally {
       setLoading(false);
     }
@@ -218,6 +232,8 @@ export default function Login() {
                 </button>
               </div>
             </div>
+
+            <Captcha onChange={setCaptcha} reset={ulangCaptcha} />
 
             {/* Tombol Masuk */}
             <button

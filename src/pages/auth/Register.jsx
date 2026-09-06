@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import Captcha from '../../components/Captcha';
 
 export default function Register() {
   const { register } = useAuth();
@@ -14,6 +15,8 @@ export default function Register() {
   // AuthContext.register() & backend AuthController@register) — jadi setelah daftar, bukan
   // langsung masuk ke Beranda, tapi tampilkan layar "cek email kamu" ini.
   const [berhasilDaftar, setBerhasilDaftar] = useState(false);
+  const [captcha, setCaptcha] = useState('');
+  const [ulangCaptcha, setUlangCaptcha] = useState(0);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,13 +27,23 @@ export default function Register() {
       return;
     }
 
+    if (!captcha) {
+      setError('Centang dulu kotak "Saya bukan robot" sebelum mendaftar.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await register(form);
+      await register({ ...form, captcha });
       setBerhasilDaftar(true);
     } catch (err) {
       const errors = err.response?.data?.errors;
-      setError(errors ? Object.values(errors).flat().join(', ') : 'Registrasi gagal.');
+      const pesanServer = err.response?.data?.message;
+      setError(errors ? Object.values(errors).flat().join(', ') : pesanServer || 'Registrasi gagal.');
+
+      // Token reCAPTCHA sekali pakai — dikosongkan supaya dicentang ulang.
+      setCaptcha('');
+      setUlangCaptcha((n) => n + 1);
     } finally {
       setLoading(false);
     }
@@ -237,6 +250,8 @@ export default function Register() {
                 </label>
               </div>
             </div>
+
+            <Captcha onChange={setCaptcha} reset={ulangCaptcha} />
 
             {/* Tombol Daftar */}
             <button
