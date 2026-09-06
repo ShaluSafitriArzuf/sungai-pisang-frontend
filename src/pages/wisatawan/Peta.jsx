@@ -3,6 +3,7 @@ import api from '../../api/axios';
 import PetaInteraktif from '../../components/PetaInteraktif';
 import BottomNav from '../../components/BottomNav';
 import { FASILITAS_OPSI } from '../../utils/tampilanFasilitas';
+import { fotoPulauFallback } from '../../utils/fotoPulau';
 import { formatRupiah, hargaMulaiPerOrang } from '../../utils/harga';
 import { jarakKm } from '../../utils/jarak';
 
@@ -152,7 +153,7 @@ export default function Peta() {
                 className="w-full text-left px-3 py-3 hover:bg-[#f4ede3] transition-colors flex gap-3"
               >
                 <img
-                  src={p.foto_utama}
+                  src={p.foto_utama || fotoPulauFallback(p.nama)}
                   alt={p.nama}
                   className="w-14 h-14 rounded-lg object-cover shrink-0 bg-[#eceef1]"
                 />
