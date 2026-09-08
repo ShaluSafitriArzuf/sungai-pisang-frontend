@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Captcha from '../../components/Captcha';
+import Logo from '../../components/Logo';
 
 export default function Register() {
   const { register } = useAuth();
@@ -86,6 +87,9 @@ export default function Register() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
 
         <div className="absolute top-12 left-0 right-0 flex flex-col items-center justify-center text-white z-10 px-container-margin">
+          <span className="mb-2 drop-shadow-md">
+            <Logo ukuran={52} />
+          </span>
           <h1 className="font-display-lg-mobile text-display-lg-mobile md:text-5xl md:font-bold tracking-tight">Jelajah Bahari</h1>
           <p className="font-label-md text-label-md opacity-90 tracking-widest uppercase mt-1">Eksplorasi Nusantara</p>
         </div>

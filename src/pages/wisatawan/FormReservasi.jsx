@@ -139,6 +139,24 @@ export default function FormReservasi() {
     ? tglLokal(new Date(new Date(tanggal).getTime() + 86400000))
     : tanggalMinimal;
 
+  // Sisa hari KALENDER dari hari ini sampai tanggal kunjungan yang dipilih. Dipakai untuk
+  // memperingatkan bahwa reservasi yang terlalu dekat tidak akan bisa dibatalkan.
+  //
+  // Ini menutup pertentangan yang selama ini tidak pernah diberitahukan kepada wisatawan:
+  // pemesanan boleh dilakukan sampai H-1, sedangkan pembatalan mensyaratkan sisa waktu
+  // minimal dua hari kalender. Akibatnya reservasi yang dibuat untuk H-1 tidak akan pernah
+  // bisa dibatalkan sama sekali, dan yang dibuat untuk H-2 hanya bisa dibatalkan pada hari
+  // pemesanannya saja. Dulu wisatawan baru menyadarinya setelah uangnya terlanjur ditransfer.
+  const sisaHariKunjungan = (() => {
+    if (!tanggal) return null;
+    const pilih = new Date(`${tanggal}T00:00:00`);
+    if (Number.isNaN(pilih.getTime())) return null;
+    const hariIni = new Date();
+    hariIni.setHours(0, 0, 0, 0);
+    return Math.round((pilih - hariIni) / 86400000);
+  })();
+  const tidakBisaDibatalkan = sisaHariKunjungan !== null && sisaHariKunjungan < 2;
+
   const jumlahMalam =
     jenis === 'menginap' && tanggal && tanggalSelesai
       ? Math.max(1, Math.round((new Date(tanggalSelesai) - new Date(tanggal)) / 86400000))
@@ -546,6 +564,22 @@ export default function FormReservasi() {
           <hr className="border-outline-variant" />
           <div className="flex justify-between font-bold text-on-surface"><span>Total</span><span>Rp{total.toLocaleString('id-ID')}</span></div>
         </div>
+
+        {tidakBisaDibatalkan && (
+          <div className="flex gap-2.5 items-start bg-orange-50 border border-orange-200 rounded-xl p-3 mb-3">
+            <span className="material-symbols-outlined text-[20px] text-orange-600 shrink-0">warning</span>
+            <p className="text-xs text-orange-800 leading-relaxed">
+              <span className="font-semibold block mb-0.5">
+                Reservasi ini tidak akan dapat dibatalkan
+              </span>
+              Tanggal kunjungan yang kamu pilih tinggal{' '}
+              {sisaHariKunjungan <= 0 ? 'hari ini' : `${sisaHariKunjungan} hari lagi`}, sedangkan
+              pengajuan pembatalan harus diajukan paling lambat dua hari sebelum tanggal
+              kunjungan. Kalau kamu masih mungkin berubah rencana, pilih tanggal yang lebih jauh
+              sebelum melanjutkan ke pembayaran.
+            </p>
+          </div>
+        )}
 
         <button
           className="w-full bg-[#F4A261] text-white font-semibold py-3.5 rounded-xl active:scale-[0.98] transition-transform"

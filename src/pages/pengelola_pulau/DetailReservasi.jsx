@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import StatusBadge from '../../components/StatusBadge';
+import { rincianBiaya, rupiah } from '../../utils/rincianBiaya';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {
@@ -76,6 +77,27 @@ export default function DetailReservasi() {
             <Baris label="Tanggal Kunjungan" value={formatTanggal(r.tanggal_kunjungan)} />
           )}
           <Baris label="Jumlah Wisatawan" value={`${r.jumlah_orang} orang`} />
+        </div>
+
+        {/* Rincian biaya. Ditampilkan supaya Pengelola Pulau dapat melihat berapa bagian
+            tiket masuk dan akomodasi pulaunya dari satu kali pembayaran wisatawan. */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+          <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2 px-0.5">Rincian Harga Pemesanan</p>
+          <div className="divide-y divide-outline-variant">
+            {rincianBiaya(r).map((b) => (
+              <div key={b.kunci} className="py-2 flex justify-between gap-3 text-sm">
+                <span className="min-w-0">
+                  <span className="block text-on-surface">{b.label}</span>
+                  <span className="block text-[11px] text-on-surface-variant">{b.dasar}</span>
+                </span>
+                <span className="shrink-0 font-medium tabular-nums">{rupiah(b.jumlah)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between items-center pt-3 mt-1 border-t-2 border-[#004873] text-sm">
+            <span className="font-semibold">Total Bayar</span>
+            <span className="font-bold text-base tabular-nums">{rupiah(r.total_bayar)}</span>
+          </div>
         </div>
 
         {r.status === 'pengajuan_batal' && (

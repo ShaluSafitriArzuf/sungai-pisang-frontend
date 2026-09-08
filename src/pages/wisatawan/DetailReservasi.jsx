@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import StatusBadge from '../../components/StatusBadge';
 import { useToast } from '../../context/ToastContext';
+import { rincianBiaya, rupiah } from '../../utils/rincianBiaya';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {
@@ -37,7 +38,7 @@ export default function DetailReservasi() {
     setUnduh(jenisDokumen);
     try {
       const res = await api.get(`/reservasi/${id}/${jenisDokumen}`, { responseType: 'blob' });
-      const nama = jenisDokumen === 'invoice' ? 'Invoice' : 'Tiket';
+      const nama = { invoice: 'Invoice', kuitansi: 'Kuitansi', tiket: 'Tiket' }[jenisDokumen] || 'Dokumen';
       const berkas = `${nama}-${r?.kode_booking || id}.pdf`;
 
       const alamat = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
@@ -103,6 +104,32 @@ export default function DetailReservasi() {
   const bisaBatal = r.status === 'valid' && r.bisa_ajukan_batal;
   const lewatBatasBatal = r.status === 'valid' && !r.bisa_ajukan_batal;
 
+  const rincian = rincianBiaya(r);
+  const sudahDiverifikasi = ['valid', 'selesai'].includes(r.status);
+
+  // Alasan tombol kuitansi dan tiket tidak aktif berbeda-beda menurut statusnya. Kalau
+  // pesannya disamaratakan menjadi "belum diverifikasi", reservasi yang justru sudah
+  // diverifikasi lalu dibatalkan akan diberi keterangan yang keliru.
+  const alasanDokumenTerkunci = {
+    menunggu_verifikasi: 'Kuitansi dan tiket terbit setelah Pengantar Pulau memverifikasi bukti pembayaran.',
+    ditolak: 'Bukti pembayaran reservasi ini ditolak, sehingga kuitansi dan tiket belum dapat diterbitkan. Unggah ulang bukti transfer terlebih dahulu.',
+    pengajuan_batal: 'Pengajuan pembatalan reservasi ini sedang diproses, sehingga tiket untuk sementara tidak dapat diunduh.',
+    dibatalkan: 'Reservasi ini sudah dibatalkan, sehingga kuitansi dan tiketnya tidak lagi diterbitkan. Untuk keperluan pengembalian dana, hubungi Pengantar Pulau.',
+  }[r.status] || 'Kuitansi dan tiket belum dapat diunduh untuk status reservasi ini.';
+
+  // Sisa hari kalender menuju tanggal kunjungan, dikirim backend. Dipakai untuk MENJELASKAN
+  // kenapa pembatalan tidak tersedia, bukan sekadar menghilangkan tombolnya tanpa alasan —
+  // ini yang dulu membuat aturan H-1 dan H-2 terasa bertentangan bagi wisatawan.
+  const sisaHari = typeof r.sisa_hari_kunjungan === 'number' ? r.sisa_hari_kunjungan : null;
+  const keteranganBatas = sisaHari === null
+    ? 'Pengajuan pembatalan hanya dapat diajukan paling lambat dua hari sebelum tanggal kunjungan.'
+    : sisaHari < 0
+      ? 'Tanggal kunjungan sudah lewat, sehingga pembatalan tidak lagi dapat diajukan.'
+      : sisaHari === 0
+        ? 'Tanggal kunjungan adalah hari ini, sehingga pembatalan tidak lagi dapat diajukan.'
+        : `Tanggal kunjungan tinggal ${sisaHari} hari lagi, sedangkan pengajuan pembatalan `
+          + 'harus diajukan paling lambat dua hari sebelum tanggal kunjungan.';
+
   return (
     <div className="wadah-sempit pb-24 md:pb-10 px-4 md:px-6 pt-4 md:pt-8">
       <div className="flex items-center gap-2 mb-4">
@@ -140,44 +167,78 @@ export default function DetailReservasi() {
           <div className="flex justify-between"><span>Tanggal</span><span>{formatTanggal(r.tanggal_kunjungan)}</span></div>
         )}
         <div className="flex justify-between"><span>Jumlah Orang</span><span>{r.jumlah_orang}</span></div>
-        <div className="flex justify-between"><span>Total Bayar</span><span className="font-bold text-karang-dark">Rp{Number(r.total_bayar).toLocaleString('id-ID')}</span></div>
         {r.kode_booking && (
           <div className="flex justify-between"><span>Kode Pemesanan</span><span className="font-mono font-semibold">{r.kode_booking}</span></div>
         )}
         <div className="flex justify-between items-center pt-2"><span>Status</span><StatusBadge status={r.status} /></div>
       </div>
 
+      {/* ── Rincian harga pemesanan ──
+          Sebelumnya halaman ini hanya menampilkan satu angka Total Bayar, padahal angka itu
+          gabungan tiga komponen. Rinciannya ditampilkan supaya wisatawan bisa memeriksa
+          sendiri dari mana totalnya berasal. */}
+      <div className="card mb-4 text-sm">
+        <p className="font-semibold mb-1">Rincian Harga Pemesanan</p>
+        <p className="text-gray-500 text-xs mb-3">
+          Seluruh biaya dibayarkan sekaligus melalui satu kali transfer.
+        </p>
+        <div className="divide-y divide-outline-variant">
+          {rincian.map((b) => (
+            <div key={b.kunci} className="py-2 flex justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-on-surface">{b.label}</span>
+                <span className="block text-[11px] text-on-surface-variant">{b.dasar}</span>
+              </span>
+              <span className="shrink-0 font-medium tabular-nums">{rupiah(b.jumlah)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between items-center pt-3 mt-1 border-t-2 border-[#004873]">
+          <span className="font-semibold">Total Bayar</span>
+          <span className="font-bold text-lg text-karang-dark tabular-nums">{rupiah(r.total_bayar)}</span>
+        </div>
+      </div>
+
       {/* ── Dokumen ── */}
       <div className="card mb-4 text-sm">
         <p className="font-semibold mb-1">Dokumen</p>
         <p className="text-gray-500 text-xs mb-3">
-          Invoice memuat rincian biaya dan dapat diunduh kapan saja. Tiket berisi kode
-          pemesanan serta daftar peserta, dan terbit setelah pembayaran diverifikasi.
+          Invoice adalah tagihan, sehingga dapat diunduh sejak reservasi dibuat. Kuitansi
+          adalah bukti uang sudah diterima, dan tiket adalah bukti hak keberangkatan —
+          keduanya terbit setelah pembayaran diverifikasi.
         </p>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => unduhDokumen('invoice')}
             disabled={unduh !== ''}
-            className="flex-1 flex items-center justify-center gap-1.5 border border-outline-variant text-[#004873] font-semibold py-2.5 rounded-xl text-xs disabled:opacity-60"
+            className="flex items-center justify-center gap-1.5 border border-outline-variant text-[#004873] font-semibold py-2.5 rounded-xl text-xs disabled:opacity-60"
           >
             <span className="material-symbols-outlined text-[16px]">receipt_long</span>
             {unduh === 'invoice' ? 'Menyiapkan...' : 'Unduh Invoice'}
           </button>
           <button
             type="button"
+            onClick={() => unduhDokumen('kuitansi')}
+            disabled={unduh !== '' || !sudahDiverifikasi}
+            className="flex items-center justify-center gap-1.5 border border-outline-variant text-[#004873] font-semibold py-2.5 rounded-xl text-xs disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined text-[16px]">request_quote</span>
+            {unduh === 'kuitansi' ? 'Menyiapkan...' : 'Unduh Kuitansi'}
+          </button>
+          <button
+            type="button"
             onClick={() => unduhDokumen('tiket')}
-            disabled={unduh !== '' || !['valid', 'selesai'].includes(r.status)}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-[#004873] text-white font-semibold py-2.5 rounded-xl text-xs disabled:opacity-50"
+            disabled={unduh !== '' || !sudahDiverifikasi}
+            className="col-span-2 flex items-center justify-center gap-1.5 bg-[#004873] text-white font-semibold py-2.5 rounded-xl text-xs disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[16px]">confirmation_number</span>
             {unduh === 'tiket' ? 'Menyiapkan...' : 'Unduh Tiket'}
           </button>
         </div>
-        {!['valid', 'selesai'].includes(r.status) && (
+        {!sudahDiverifikasi && (
           <p className="text-[11px] text-on-surface-variant mt-2 leading-snug">
-            Tiket belum dapat diunduh karena pembayaran reservasi ini belum diverifikasi
-            oleh Pengantar Pulau.
+            {alasanDokumenTerkunci}
           </p>
         )}
       </div>
@@ -251,8 +312,12 @@ export default function DetailReservasi() {
 
       {lewatBatasBatal && (
         <div className="card mb-4 text-sm bg-gray-50">
-          <p className="text-gray-500">
-            Pengajuan pembatalan sudah tidak bisa dilakukan — batas waktunya minimal H-2 sebelum tanggal kunjungan.
+          <p className="font-semibold text-on-surface mb-1">Pembatalan tidak tersedia</p>
+          <p className="text-gray-500 leading-relaxed">{keteranganBatas}</p>
+          <p className="text-gray-500 leading-relaxed mt-2">
+            Aturan ini berlaku karena Pengantar Pulau memerlukan waktu untuk menyusun manifest
+            keberangkatan. Reservasi yang dibuat kurang dari dua hari sebelum tanggal kunjungan
+            memang tidak dapat dibatalkan sejak awal.
           </p>
         </div>
       )}

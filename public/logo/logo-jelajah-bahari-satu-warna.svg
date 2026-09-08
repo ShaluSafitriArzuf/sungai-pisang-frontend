@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 130" width="512" height="512" role="img" aria-label="Jelajah Bahari Sungai Pisang">
+  <title>Jelajah Bahari — Sungai Pisang (satu warna)</title>
+  <circle cx="65" cy="65" r="65" fill="#004873"/>
+  <circle cx="65" cy="50" r="17" fill="#FFFFFF" opacity="0.35"/>
+  <path d="M65 79 L65 50" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M67 54 L67 76 L84 76 Z" fill="#FFFFFF"/>
+  <path d="M63 58 L63 76 L50 76 Z" fill="#FFFFFF" opacity="0.85"/>
+  <path d="M38 79 L92 79 L83 92 Q65 96 47 92 Z" fill="#FFFFFF"/>
+  <path d="M25 101 Q38 94 51 101 T77 101 T103 101" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.7"/>
+</svg>

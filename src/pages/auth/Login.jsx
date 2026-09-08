@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import Captcha from '../../components/Captcha';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import Logo from '../../components/Logo';
 
 function IconGoogle() {
   return (
@@ -118,6 +119,11 @@ export default function Login() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/10 z-10" />
 
         <div className="relative z-20 flex flex-col items-center justify-center h-full pt-8">
+          {/* Lambang usaha. Halaman masuk adalah halaman pertama yang dilihat orang, jadi
+              di sinilah identitas usaha paling perlu muncul. */}
+          <span className="mb-2 drop-shadow-md">
+            <Logo ukuran={56} />
+          </span>
           <h1 className="font-display-lg-mobile text-display-lg-mobile md:text-5xl md:font-bold text-white tracking-tight drop-shadow-md">
             Jelajah Bahari
           </h1>

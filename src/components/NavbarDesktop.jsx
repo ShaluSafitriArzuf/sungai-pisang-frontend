@@ -5,6 +5,7 @@ import {
   menuUntukPeran, LABEL_ROLE, BERANDA_PER_ROLE, PROFIL_PER_ROLE,
   JALUR_BERSAMA, pakaiTopNav,
 } from '../utils/menuPeran';
+import Logo from './Logo';
 
 // Navbar mendatar untuk layar lebar (laptop/desktop), pendamping BottomNav yang dipakai di HP.
 // Muncul mulai lebar 768px (md); di bawah itu BottomNav yang bertugas, jadi tampilan di HP
@@ -73,8 +74,8 @@ export default function NavbarDesktop() {
           to={BERANDA_PER_ROLE[user?.role] || '/beranda'}
           className="flex items-center gap-2.5 shrink-0 group"
         >
-          <span className="w-10 h-10 rounded-xl bg-[#004873] text-white flex items-center justify-center shadow-sm group-hover:bg-[#00375A] transition-colors">
-            <span className="material-symbols-outlined text-[22px]">sailing</span>
+          <span className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-sm group-hover:opacity-90 transition-opacity">
+            <Logo ukuran={40} />
           </span>
           {/* Nama situs di sebelah logo tidak ditampilkan sama sekali untuk menu tujuh butir
               (Pengelola Pulau). Sebelumnya masih dimunculkan pada layar sangat lebar, dan di

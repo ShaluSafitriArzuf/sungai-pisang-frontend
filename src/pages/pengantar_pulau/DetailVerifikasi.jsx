@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import StatusBadge from '../../components/StatusBadge';
 import { useToast } from '../../context/ToastContext';
 import { waLink } from '../../utils/kontak';
+import { rincianBiaya, rupiah } from '../../utils/rincianBiaya';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 function formatTanggal(iso) {
@@ -128,8 +129,29 @@ export default function DetailVerifikasi() {
           <div className="flex justify-between"><span>Tanggal</span><span>{formatTanggal(r.tanggal_kunjungan)}</span></div>
         )}
         <div className="flex justify-between"><span>Jumlah Orang</span><span>{r.jumlah_orang}</span></div>
-        <div className="flex justify-between"><span>Total</span><span className="font-bold">Rp{Number(r.total_bayar).toLocaleString('id-ID')}</span></div>
         <div className="flex justify-between items-center pt-1"><span>Status</span><StatusBadge status={r.status} /></div>
+      </div>
+
+      {/* Rincian biaya ditampilkan juga di sini supaya Pengantar Pulau dapat mencocokkan
+          nominal pada bukti transfer dengan komponen biayanya satu per satu, bukan hanya
+          dengan satu angka total. */}
+      <div className="card mb-4 text-sm">
+        <p className="font-semibold mb-2">Rincian Harga Pemesanan</p>
+        <div className="divide-y divide-outline-variant">
+          {rincianBiaya(r).map((b) => (
+            <div key={b.kunci} className="py-2 flex justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-on-surface">{b.label}</span>
+                <span className="block text-[11px] text-on-surface-variant">{b.dasar}</span>
+              </span>
+              <span className="shrink-0 font-medium tabular-nums">{rupiah(b.jumlah)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between items-center pt-3 mt-1 border-t-2 border-[#004873]">
+          <span className="font-semibold">Total yang harus ditransfer</span>
+          <span className="font-bold text-lg tabular-nums">{rupiah(r.total_bayar)}</span>
+        </div>
       </div>
 
       {r.bukti_transfer && (

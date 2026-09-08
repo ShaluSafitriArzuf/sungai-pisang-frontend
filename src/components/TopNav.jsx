@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useJumlahNotifBelumDibaca } from '../hooks/useJumlahNotifBelumDibaca';
+import Logo from './Logo';
 
 const IKON_MENU = {
   Dashboard: 'grid_view',
@@ -61,7 +62,7 @@ export default function TopNav({ title, menu = [] }) {
               lebih berguna, tapi di laptop tanpa logo header ini kelihatan seperti bilah
               aplikasi, bukan kepala sebuah situs. */}
           <span className="hidden md:flex w-10 h-10 rounded-xl bg-white/15 items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[22px]">sailing</span>
+            <Logo ukuran={26} varian="latarGelap" />
           </span>
           <span className="min-w-0">
             <p className="font-bold text-lg md:text-xl leading-tight truncate">{title}</p>
