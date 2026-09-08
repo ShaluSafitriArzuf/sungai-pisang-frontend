@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { PENYELENGGARA, REKENING } from '../../config/penyelenggara';
 import { waLink } from '../../utils/kontak';
+import { useToast } from '../../context/ToastContext';
 
 // Tanggal dari form reservasi masih berformat mentah "2026-08-13" (nilai asli input date).
 // Kalau langsung ditampilkan, halaman terakhir checkout jadi satu-satunya layar yang
@@ -18,6 +19,7 @@ function formatTanggal(iso) {
 export default function Pembayaran() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [preview, setPreview] = useState(null);
   const [buktiBase64, setBuktiBase64] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,7 +51,7 @@ export default function Pembayaran() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/reservasi', {
+      const jawaban = await api.post('/reservasi', {
         pulau_id: state.pulau_id,
         jenis: state.jenis,
         akomodasi_id: state.akomodasi_id,
@@ -69,7 +71,19 @@ export default function Pembayaran() {
         peserta: state.peserta || [],
         bukti_transfer: buktiBase64,
       });
-      navigate('/reservasi');
+
+      // Sesudah bukti terkirim, wisatawan diantar ke halaman detail reservasinya sendiri,
+      // bukan ke daftar riwayat. Di halaman itu dia langsung melihat kode pemesanan, status
+      // "menunggu verifikasi", rincian biayanya, dan sudah bisa mengunduh Invoice — jadi
+      // layar itu berfungsi sebagai bukti bahwa pesanannya benar-benar masuk. Kalau id-nya
+      // tidak terbaca karena alasan apa pun, jatuhnya tetap ke daftar riwayat seperti dulu.
+      //
+      // replace: true dipakai supaya tombol back tidak mengembalikan wisatawan ke halaman
+      // pembayaran yang datanya masih utuh — kalau itu terjadi, dia bisa tanpa sadar
+      // mengirim reservasi yang sama untuk kedua kalinya.
+      const idBaru = jawaban?.data?.data?.id;
+      showToast('Bukti pembayaran terkirim. Menunggu verifikasi Pengantar Pulau.', 3200, 'sukses');
+      navigate(idBaru ? `/reservasi/${idBaru}` : '/reservasi', { replace: true });
     } catch (err) {
       // Backend mengirim {message} untuk penolakan aturan bisnis, tetapi {errors} untuk
       // kegagalan validasi. Tanpa cabang kedua, kesalahan pengisian data peserta hanya
