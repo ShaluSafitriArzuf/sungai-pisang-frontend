@@ -15,10 +15,13 @@ export const PENYELENGGARA = {
   email: 'shaluarzuf@gmail.com',
 };
 
+// Rekening tujuan adalah rekening Pengantar Pulau, sejalan dengan laporan yang menyatakan
+// ongkos kapal penyeberangan merupakan pemasukan Pengantar Pulau. Tiket masuk dan biaya
+// akomodasi yang menjadi hak Pengelola Pulau dititipkan melalui pembayaran yang sama.
 export const REKENING = {
   bank: 'Bank BRI',
-  nomor: '7241 0101 0196 505',
-  atasNama: 'SHALU SAFITRI ARZUF',
+  nomor: '5467 0101 0925 532',
+  atasNama: 'JACKY HERMAN R',
 };
 
 // Nomor rekening tanpa spasi, untuk tombol salin.
