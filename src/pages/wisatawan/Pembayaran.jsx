@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import { PENYELENGGARA, REKENING } from '../../config/penyelenggara';
+import { waLink } from '../../utils/kontak';
 
 // Tanggal dari form reservasi masih berformat mentah "2026-08-13" (nilai asli input date).
 // Kalau langsung ditampilkan, halaman terakhir checkout jadi satu-satunya layar yang
@@ -111,9 +113,31 @@ export default function Pembayaran() {
       </div>
 
       <div className="card mb-4 text-sm">
-        <p className="font-semibold mb-1">Transfer ke:</p>
-        <p>Bank BRI — 1234-01-567890-50-1</p>
-        <p>a.n. Pengelola Wisata Sungai Pisang</p>
+        <p className="font-semibold mb-2">Transfer ke rekening berikut</p>
+
+        <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 mb-3">
+          <p className="text-on-surface-variant text-xs">{REKENING.bank}</p>
+          <p className="font-bold text-lg text-laut-dark tracking-wide">{REKENING.nomor}</p>
+          <p className="text-on-surface-variant">a.n. {REKENING.atasNama}</p>
+        </div>
+
+        <p className="text-on-surface-variant">
+          Transfer sejumlah{' '}
+          <b className="text-karang-dark">Rp{state.total_estimasi.toLocaleString('id-ID')}</b>,
+          lalu unggah bukti transfernya di bawah ini.
+        </p>
+
+        {/* Peringatan penipuan. Wisatawan diminta membayar penuh di muka sebelum bertemu
+            siapa pun, jadi halaman ini perlu menegaskan ke mana uangnya boleh dikirim dan
+            apa yang tidak akan pernah diminta sistem. */}
+        <p className="mt-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 p-3 text-xs leading-relaxed">
+          Transfer hanya ke rekening yang tertera di halaman ini. Sistem tidak pernah meminta
+          PIN, OTP, atau kata sandi perbankan Anda. Perlu konfirmasi? Hubungi{' '}
+          {PENYELENGGARA.narahubung} di{' '}
+          <a href={waLink(PENYELENGGARA.noHp)} target="_blank" rel="noreferrer" className="font-semibold underline">
+            {PENYELENGGARA.noHp}
+          </a>.
+        </p>
       </div>
 
       {error && <p className="text-red-500 text-sm mb-2">{error}</p>}

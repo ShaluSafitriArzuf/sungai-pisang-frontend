@@ -249,8 +249,24 @@ export default function Register() {
               </div>
               <div className="ml-3 text-sm">
                 <label className="font-body-md text-on-surface-variant" htmlFor="terms">
-                  Saya menyetujui <span className="text-primary font-semibold">Syarat &amp; Ketentuan</span> serta{' '}
-                  <span className="text-primary font-semibold">Kebijakan Privasi</span>.
+                  Saya menyetujui{' '}
+                  <Link
+                    to="/syarat-ketentuan"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary font-semibold underline"
+                  >
+                    Syarat &amp; Ketentuan
+                  </Link>{' '}
+                  serta{' '}
+                  <Link
+                    to="/kebijakan-privasi"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary font-semibold underline"
+                  >
+                    Kebijakan Privasi
+                  </Link>.
                 </label>
               </div>
             </div>

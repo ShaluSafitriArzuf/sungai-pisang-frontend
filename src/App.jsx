@@ -11,6 +11,9 @@ import GoogleCallback from './pages/auth/GoogleCallback';
 import Beranda from './pages/wisatawan/Beranda';
 import DetailPulau from './pages/wisatawan/DetailPulau';
 import Peta from './pages/wisatawan/Peta';
+
+import SyaratKetentuan from './pages/legal/SyaratKetentuan';
+import KebijakanPrivasi from './pages/legal/KebijakanPrivasi';
 import FormReservasi from './pages/wisatawan/FormReservasi';
 import Pembayaran from './pages/wisatawan/Pembayaran';
 import RiwayatReservasi from './pages/wisatawan/RiwayatReservasi';
@@ -92,6 +95,11 @@ export default function App() {
       <Route path="/beranda" element={<Beranda />} />
       <Route path="/pulau/:id" element={<DetailPulau />} />
       <Route path="/peta" element={<Peta />} />
+
+      {/* Dua halaman ini wajib bisa dibuka tanpa login, karena tautannya ada di halaman
+          Daftar — orang harus bisa membacanya sebelum menyetujuinya. */}
+      <Route path="/syarat-ketentuan" element={<SyaratKetentuan />} />
+      <Route path="/kebijakan-privasi" element={<KebijakanPrivasi />} />
 
       {/* ── Wisatawan: wajib login (baru diminta saat mau reservasi/dsb) ── */}
       <Route path="/reservasi/baru" element={W(FormReservasi)} />
