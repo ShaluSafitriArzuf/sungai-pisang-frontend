@@ -249,6 +249,18 @@ export default function FormReservasi() {
         })),
         total_estimasi: total,
         nama_pulau: pulau.nama,
+        // Rincian komponen biaya ikut dibawa ke halaman Pembayaran. Sebelumnya hanya
+        // total_estimasi yang dikirim, sehingga layar terakhir sebelum wisatawan
+        // mentransfer uangnya justru satu-satunya layar yang tidak menjelaskan angka itu
+        // terdiri dari apa saja.
+        rincian: {
+          penyeberangan: biayaPenyeberangan,
+          tiket_masuk: biayaTiket,
+          akomodasi: biayaAkomodasi,
+          jumlah_malam: jumlahMalam,
+          orang_bayar_tiket: orangBayarTiket,
+          orang_ditanggung_tiket: orangDitanggungTiket,
+        },
       },
     });
   }

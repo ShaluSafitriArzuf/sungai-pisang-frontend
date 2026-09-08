@@ -28,6 +28,8 @@ export default function Pembayaran() {
     return null;
   }
 
+  const rincian = state.rincian || null;
+
   function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -109,7 +111,57 @@ export default function Pembayaran() {
             <span>{formatTanggal(state.tanggal_kunjungan)}</span>
           </div>
         )}
-        <div className="flex justify-between"><span>Total Bayar</span><span className="font-bold text-karang-dark">Rp{state.total_estimasi.toLocaleString('id-ID')}</span></div>
+        <div className="flex justify-between text-on-surface-variant">
+          <span>Jumlah Peserta</span>
+          <span>{state.jumlah_orang} orang</span>
+        </div>
+
+        {/* Rincian biaya diulang di sini, bukan hanya di halaman Form Reservasi. Ini layar
+            terakhir sebelum wisatawan mentransfer uangnya, jadi angka yang diminta harus
+            bisa ditelusuri tanpa perlu menekan tombol kembali. Ditampilkan hanya kalau
+            rinciannya ikut terkirim — halaman ini bisa saja dibuka dari riwayat navigasi
+            lama yang belum membawa data tersebut. */}
+        {rincian && (
+          <div className="mt-3 pt-3 border-t border-outline-variant space-y-1.5">
+            <div className="flex justify-between text-on-surface-variant">
+              <span>Penyeberangan ({state.jumlah_orang} orang)</span>
+              <span>Rp{Number(rincian.penyeberangan || 0).toLocaleString('id-ID')}</span>
+            </div>
+
+            <div className="flex justify-between text-on-surface-variant">
+              <span>
+                Tiket Masuk
+                {rincian.orang_ditanggung_tiket > 0 && (
+                  <span className="block text-[10px] text-green-700">
+                    {rincian.orang_bayar_tiket} dari {state.jumlah_orang} orang —{' '}
+                    {rincian.orang_ditanggung_tiket} sudah termasuk akomodasi
+                  </span>
+                )}
+              </span>
+              <span>Rp{Number(rincian.tiket_masuk || 0).toLocaleString('id-ID')}</span>
+            </div>
+
+            {state.jenis === 'menginap' && (
+              <div className="flex justify-between text-on-surface-variant">
+                <span>
+                  {state.bawa_tenda_sendiri
+                    ? 'Akomodasi (bawa tenda sendiri)'
+                    : `Akomodasi${rincian.jumlah_malam > 0 ? ` (${rincian.jumlah_malam} malam)` : ''}`}
+                </span>
+                <span>
+                  {state.bawa_tenda_sendiri
+                    ? 'Gratis'
+                    : `Rp${Number(rincian.akomodasi || 0).toLocaleString('id-ID')}`}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-between mt-3 pt-3 border-t border-outline-variant">
+          <span className="font-semibold">Total Bayar</span>
+          <span className="font-bold text-karang-dark">Rp{state.total_estimasi.toLocaleString('id-ID')}</span>
+        </div>
       </div>
 
       <div className="card mb-4 text-sm">
