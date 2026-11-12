@@ -42,7 +42,7 @@ export default function FormPeserta({ daftar = [], onChange }) {
                   className={inputCls}
                   value={p.nama || ''}
                   onChange={(e) => ubah(i, 'nama', e.target.value)}
-                  placeholder="mis. Shalu Safitri Arzuf"
+                  placeholder="Masukan nama lengkap"
                 />
               </div>
 

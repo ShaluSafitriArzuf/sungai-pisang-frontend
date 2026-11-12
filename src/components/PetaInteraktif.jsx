@@ -10,13 +10,14 @@ import { jarakKm, terdekatDari } from '../utils/jarak';
 import { formatRupiah, hargaMulaiPerOrang } from '../utils/harga';
 import { ikonFasilitas, labelFasilitas } from '../utils/tampilanFasilitas';
 import { pulauIcon, pengantarIcon, lokasiSayaIcon } from '../utils/mapIcons';
-import { cariRuteDarat, formatDurasi, formatJarak } from '../utils/rute';
+import { cariRuteDarat, formatDurasi, formatJarak, MODA, estimasiDurasiDetik } from '../utils/rute';
 
 const { BaseLayer, Overlay } = LayersControl;
 
 const PUSAT_KAWASAN = [-1.0836, 100.3556];
 const PUSAT_KOTA_PADANG = [-0.9471, 100.4172];
 const RADIUS_ZONA_METER = 500;
+const IKON_MODA = { mobil: 'directions_car', motor: 'two_wheeler' };
 
 /* Menyalurkan instance peta ke komponen induk supaya tombol di luar MapContainer
    (Lokasi Saya, layar penuh, panel daftar pulau) bisa menggerakkan peta. */
@@ -73,9 +74,8 @@ function TombolPeta({ ikon, label, onClick, aktif, sibuk }) {
       type="button"
       onClick={onClick}
       disabled={sibuk}
-      className={`flex items-center gap-1.5 rounded-full pl-2.5 pr-3 py-2 text-[11px] font-semibold shadow-md transition-colors disabled:opacity-60 ${
-        aktif ? 'bg-[#004873] text-white' : 'bg-white/95 backdrop-blur-sm text-[#004873] hover:bg-white'
-      }`}
+      className={`flex items-center gap-1.5 rounded-full pl-2.5 pr-3 py-2 text-[11px] font-semibold shadow-md transition-colors disabled:opacity-60 ${aktif ? 'bg-[#004873] text-white' : 'bg-white/95 backdrop-blur-sm text-[#004873] hover:bg-white'
+        }`}
     >
       <span className="material-symbols-outlined text-[16px]">{ikon}</span>
       <span className="hidden sm:inline">{label}</span>
@@ -93,6 +93,7 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
   const [statusRute, setStatusRute] = useState('idle');
   const [pesanRute, setPesanRute] = useState('');
   const [layarPenuh, setLayarPenuh] = useState(false);
+  const [moda, setModa] = useState('mobil');
 
   const pengantarUtama = pengantarList[0];
 
@@ -401,7 +402,7 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
         {ruteDarat && (
           <Polyline positions={ruteDarat.garis} pathOptions={{ color: '#1A73E8', weight: 5, opacity: 0.85 }}>
             <Tooltip sticky>
-              Rute darat &mdash; {formatJarak(ruteDarat.jarakMeter)}, {formatDurasi(ruteDarat.durasiDetik)}
+              Rute darat &mdash; {formatJarak(ruteDarat.jarakMeter)}, {formatDurasi(estimasiDurasiDetik(ruteDarat.jarakMeter, moda))} (estimasi)
             </Tooltip>
           </Polyline>
         )}
@@ -447,6 +448,22 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
           {ruteDarat && statusRute === 'siap' && (
             <div>
               <p className="text-[9px] font-bold text-outline uppercase tracking-wider mb-1">Rute darat ke titik kumpul</p>
+
+              <div className="flex gap-1.5 mb-2">
+                {Object.entries(MODA).map(([kunci, m]) => (
+                  <button
+                    key={kunci}
+                    type="button"
+                    onClick={() => setModa(kunci)}
+                    className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-semibold transition-colors ${moda === kunci ? 'bg-[#004873] text-white' : 'bg-[#eceef1] text-[#004873]'
+                      }`}
+                  >
+                    <span className="material-symbols-outlined text-[14px]">{IKON_MODA[kunci]}</span>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1 text-[12px] font-bold text-[#004873]">
                   <span className="material-symbols-outlined text-[14px]">straighten</span>
@@ -454,9 +471,10 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
                 </span>
                 <span className="flex items-center gap-1 text-[12px] font-bold text-[#004873]">
                   <span className="material-symbols-outlined text-[14px]">schedule</span>
-                  {formatDurasi(ruteDarat.durasiDetik)}
+                  {formatDurasi(estimasiDurasiDetik(ruteDarat.jarakMeter, moda))}
                 </span>
               </div>
+              <p className="text-[9.5px] text-[#41474f] mt-1">Estimasi, kondisi lalu lintas bisa berbeda.</p>
             </div>
           )}
 

@@ -44,3 +44,17 @@ export function formatDurasi(detik) {
   const sisa = menit % 60;
   return sisa ? `${jam} jam ${sisa} menit` : `${jam} jam`;
 }
+// Kecepatan rata-rata realistis untuk jalan berkelok & perbukitan menuju titik kumpul.
+// Angka ini estimasi, bisa disesuaikan setelah dicocokkan dengan perjalanan sebenarnya.
+export const MODA = {
+  mobil: { label: 'Mobil', kecepatanKmJam: 38 },
+  motor: { label: 'Motor', kecepatanKmJam: 42 },
+};
+
+// Hitung estimasi waktu dari jarak rute (bukan dari durasi bawaan OSRM,
+// karena server demo-nya terlalu optimis).
+export function estimasiDurasiDetik(jarakMeter, moda = 'mobil') {
+  if (jarakMeter == null) return null;
+  const kecepatan = MODA[moda]?.kecepatanKmJam ?? MODA.mobil.kecepatanKmJam;
+  return (jarakMeter / 1000 / kecepatan) * 3600;
+}
