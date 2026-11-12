@@ -510,6 +510,25 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
                 </span>
               </div>
               <p className="text-[9.5px] text-[#41474f] mt-1">Estimasi, kondisi lalu lintas bisa berbeda.</p>
+              {navigasiAktif && posisiRute && (
+                <div className="mt-2 pt-2 border-t border-[#eceef1]">
+                  <p className="text-[12px] font-bold text-[#004873]">
+                    Sisa {formatJarak(posisiRute.sisaMeter)} &middot; sekitar {formatDurasi(estimasiDurasiDetik(posisiRute.sisaMeter, moda))}
+                  </p>
+                  {posisiRute.simpanganMeter > 100 && (
+                    <p className="text-[10.5px] text-[#8e4e14] mt-0.5">Anda keluar dari jalur rute.</p>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={navigasiAktif ? hentikanNavigasi : mulaiNavigasi}
+                className={`mt-2 w-full rounded-lg py-1.5 text-[11px] font-semibold ${navigasiAktif ? 'bg-[#eceef1] text-[#004873]' : 'bg-[#004873] text-white'
+                  }`}
+              >
+                {navigasiAktif ? 'Hentikan Navigasi' : 'Mulai Navigasi'}
+              </button>
             </div>
           )}
 
