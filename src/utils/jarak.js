@@ -55,3 +55,20 @@ export function luasPoligonHektar(titik = []) {
 
   return Math.abs(luas / 2) / 10000; // meter persegi -> hektar
 }
+
+// Sisa jarak sepanjang garis rute dari posisi saat ini, dan seberapa jauh posisi
+// menyimpang dari rute. Dipakai fitur navigasi.
+export function sisaDiRute(posisi, garis = []) {
+  if (garis.length < 2) return null;
+  let idx = 0;
+  let terdekat = Infinity;
+  garis.forEach((t, i) => {
+    const d = jarakKmAngka(posisi, t);
+    if (d < terdekat) { terdekat = d; idx = i; }
+  });
+  let sisaKm = 0;
+  for (let i = idx; i < garis.length - 1; i += 1) {
+    sisaKm += jarakKmAngka(garis[i], garis[i + 1]);
+  }
+  return { sisaMeter: sisaKm * 1000, simpanganMeter: terdekat * 1000 };
+}

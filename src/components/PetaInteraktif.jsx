@@ -10,7 +10,7 @@ import { jarakKm, terdekatDari } from '../utils/jarak';
 import { formatRupiah, hargaMulaiPerOrang } from '../utils/harga';
 import { ikonFasilitas, labelFasilitas } from '../utils/tampilanFasilitas';
 import { pulauIcon, pengantarIcon, lokasiSayaIcon } from '../utils/mapIcons';
-import { cariRuteDarat, formatDurasi, formatJarak, MODA, estimasiDurasiDetik } from '../utils/rute';
+import { cariRuteDarat, formatDurasi, formatJarak, MODA, estimasiDurasiDetik, jarakKm, terdekatDari, sisaDiRute } from '../utils/rute';
 
 const { BaseLayer, Overlay } = LayersControl;
 
@@ -94,6 +94,9 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
   const [pesanRute, setPesanRute] = useState('');
   const [layarPenuh, setLayarPenuh] = useState(false);
   const [moda, setModa] = useState('mobil');
+  const [navigasiAktif, setNavigasiAktif] = useState(false);
+  const [posisiRute, setPosisiRute] = useState(null);
+  const watchRef = useRef(null);
 
   const pengantarUtama = pengantarList[0];
 
@@ -185,6 +188,38 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
   const adaPanelInfo = Boolean(
     pesanLokasi || pesanRute || statusRute === 'mencari' || ruteDarat || pulauTerdekat
   );
+  const hentikanNavigasi = useCallback(() => {
+    if (watchRef.current != null) {
+      navigator.geolocation.clearWatch(watchRef.current);
+      watchRef.current = null;
+    }
+    setNavigasiAktif(false);
+    setPosisiRute(null);
+  }, []);
+
+  const mulaiNavigasi = () => {
+    if (!navigator.geolocation || !ruteDarat) return;
+    setNavigasiAktif(true);
+    setPesanLokasi('');
+    watchRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const titik = [pos.coords.latitude, pos.coords.longitude];
+        setLokasiSaya(titik);
+        setPosisiRute(sisaDiRute(titik, ruteDarat.garis));
+        peta?.setView(titik, Math.max(peta.getZoom(), 16), { animate: true });
+      },
+      () => {
+        setPesanLokasi('Posisi tidak dapat dilacak. Pastikan izin lokasi diizinkan.');
+        hentikanNavigasi();
+      },
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+    );
+  };
+
+  // Hentikan pelacakan kalau halaman ditutup.
+  useEffect(() => () => {
+    if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current);
+  }, []);
 
   return (
     <div ref={wadahRef} className="relative h-full w-full bg-[#0b3d5c]">
