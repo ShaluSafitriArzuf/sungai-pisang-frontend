@@ -6,11 +6,11 @@ import {
 import { Link } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import { fotoPulauFallback } from '../utils/fotoPulau';
-import { jarakKm, terdekatDari } from '../utils/jarak';
+import { jarakKm, terdekatDari, sisaDiRute } from '../utils/jarak';
 import { formatRupiah, hargaMulaiPerOrang } from '../utils/harga';
 import { ikonFasilitas, labelFasilitas } from '../utils/tampilanFasilitas';
 import { pulauIcon, pengantarIcon, lokasiSayaIcon } from '../utils/mapIcons';
-import { cariRuteDarat, formatDurasi, formatJarak, MODA, estimasiDurasiDetik, jarakKm, terdekatDari, sisaDiRute } from '../utils/rute';
+import { cariRuteDarat, formatDurasi, formatJarak, MODA, estimasiDurasiDetik } from '../utils/rute';
 
 const { BaseLayer, Overlay } = LayersControl;
 
@@ -96,6 +96,7 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
   const [moda, setModa] = useState('mobil');
   const [navigasiAktif, setNavigasiAktif] = useState(false);
   const [posisiRute, setPosisiRute] = useState(null);
+  const [asalRute, setAsalRute] = useState(null);
   const watchRef = useRef(null);
 
   const pengantarUtama = pengantarList[0];
@@ -132,7 +133,7 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
   );
 
   /* Analisis jaringan jalan: mencari jalur darat sesungguhnya menuju titik kumpul. */
-  const gambarRuteDarat = useCallback(async (dari) => {
+  const gambarRuteDarat = useCallback(async (dari, asal = 'saya') => {
     if (!titikKumpul) {
       setStatusRute('gagal');
       setPesanRute('Titik kumpul belum diatur oleh Pengantar Pulau.');
@@ -144,6 +145,7 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
       const hasil = await cariRuteDarat(dari, titikKumpul);
       setRuteDarat(hasil);
       setStatusRute('siap');
+      setAsalRute(asal);
       peta?.fitBounds(hasil.garis, { padding: [48, 48] });
     } catch (err) {
       setRuteDarat(null);
@@ -462,7 +464,7 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
         <TombolPeta
           ikon="route"
           label="Rute dari Kota Padang"
-          onClick={() => gambarRuteDarat(PUSAT_KOTA_PADANG)}
+          onClick={() => gambarRuteDarat(PUSAT_KOTA_PADANG, 'kota')}
           sibuk={statusRute === 'mencari'}
           aktif={Boolean(ruteDarat)}
         />
@@ -521,14 +523,20 @@ export default function PetaInteraktif({ pulauList = [], pengantarList = [], fok
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={navigasiAktif ? hentikanNavigasi : mulaiNavigasi}
-                className={`mt-2 w-full rounded-lg py-1.5 text-[11px] font-semibold ${navigasiAktif ? 'bg-[#eceef1] text-[#004873]' : 'bg-[#004873] text-white'
-                  }`}
-              >
-                {navigasiAktif ? 'Hentikan Navigasi' : 'Mulai Navigasi'}
-              </button>
+              {asalRute === 'saya' ? (
+                <button
+                  type="button"
+                  onClick={navigasiAktif ? hentikanNavigasi : mulaiNavigasi}
+                  className={`mt-2 w-full rounded-lg py-1.5 text-[11px] font-semibold ${navigasiAktif ? 'bg-[#eceef1] text-[#004873]' : 'bg-[#004873] text-white'
+                    }`}
+                >
+                  {navigasiAktif ? 'Hentikan Navigasi' : 'Mulai Navigasi'}
+                </button>
+              ) : (
+                <p className="text-[10px] text-[#8e4e14] mt-2">
+                  Untuk navigasi, tekan "Lokasi Saya" agar rute dimulai dari posisi Anda.
+                </p>
+              )}
             </div>
           )}
 
